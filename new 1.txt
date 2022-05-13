@@ -1,0 +1,65 @@
+import axios from 'axios';
+import React,{useState,useEffect} from 'react';
+
+const Example = ()=>{
+const [post,setPost]=useState({})
+const [id,setId]=useState('')
+const [idFromButtonClick,setIdFromButtonClick]=useState('')
+useEffect(() =>{
+    console.log('calling')
+    axios.get(`https://fakestoreapi.com/products/${idFromButtonClick}`)
+    .then(res =>{
+        setPost(res.data)
+        console.log(res)        
+    })
+},[idFromButtonClick])
+
+const buttonChange =() =>{
+    setIdFromButtonClick(id);
+}
+
+console.log("test",post)
+
+return(
+    <div>
+        
+        <input type="text" onChange={e =>setId(e.target.value)}></input>
+        <button onClick={buttonChange}>Button Fecth</button>
+        {post.length > 0 ?
+        <>
+            {post.map((i)=>{
+                return (
+                    <>
+                        <h1>id:{i.id}</h1>
+                        <h1>title:{i.title}</h1>
+                        <h1>id:{i.id}</h1>
+                        <h1>id:{i.id}</h1>
+                        <h1>id:{i.id}</h1>
+                        <h1>id:{i.id}</h1>
+                        <h1>id:{i.id}</h1>
+                        
+                    </>
+                )
+            })}
+        </>
+        : 
+        <>
+            <h1>id:{post.id}</h1>
+            <h1>title:{post.title}</h1>
+            
+        </>
+        }
+        
+        
+  
+  
+    
+  
+  
+    </div>
+               
+)
+
+
+    }
+export default Example;

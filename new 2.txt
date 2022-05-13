@@ -1,0 +1,17 @@
+import React,{useState} from 'react';
+
+const nameChange = () =>{
+  const [name,setName]=useState("surya");
+  
+  const updateName =() =>{
+    setName("vignesh")
+  }
+  return(
+<div>
+
+  {name}
+  <button onClick={updateName}>ClickMe to change Name</button>
+</div>
+  )
+};
+export default nameChange;

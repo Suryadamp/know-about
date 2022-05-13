@@ -1,0 +1,515 @@
+
+<Dialog open={props.add} close={props.handleAddClose}>
+<DialogContent>
+  <IconButton className={classes.margin}  color="secondary" onClick={props.handleAddClose}>
+    <CloseIcon />
+  </IconButton>
+  <DialogTitle>Add Blog</DialogTitle>
+
+  <Grid container spacing={1}>
+    <Grid item xs={12} sm={6}>
+      <TextField
+        name="userId"
+        label="userId"
+        type="text"
+        value={input?.userId || ""}
+        onChange={handleInputChange}
+        error={error && !input?.userId}
+        fullWidth
+      />
+    </Grid>
+    <Grid item xs={12} sm={6}>
+      <TextField
+        name="blogTitle"
+        label="BlogTitle"
+        type="text"
+        value={input?.blogTitle || ""}
+        onChange={handleInputChange}
+        error={error && !input?.blogTitle}
+        fullWidth
+      />
+    </Grid>
+    <Grid item xs={12} sm={6}>
+      <TextField
+        name="blogContent"
+        label="BlogContent"
+        type="text"
+        value={input?.blogContent}
+        onChange={handleInputChange}
+        error={error && !input?.blogContent}
+        fullWidth
+      />
+    </Grid>
+    {/* <Grid item xs={12} sm={6}>
+      <TextField
+        name="categoryId"
+        label="categoryId"
+        type="text"
+        value={input?.categoryId}
+        error={error && input?.categoryId?.length===0}
+        onChange={handleInputChange}
+        required
+        fullWidth
+      />
+    </Grid> */}
+
+    {/* <Grid item xs={12} sm={12}>
+      {categ.map((i) => {
+           console.log(i)
+        return <>
+        <h1>{i?.category}</h1>
+        </>;
+      })}
+    </Grid>  */}
+
+    {/* <Box>
+      <Typography>Click Only one Category</Typography>
+      {categ.length>0 && categ.map((i) => {
+           
+        return  (<>
+          <FormControlLabel
+            control={<Checkbox  onChange={e=>handleCategoryChange(e)} />}
+            label={i?.category}
+           name={i?.category}
+             value={true}
+           
+            checked={categ[i.category] }
+           
+          />
+          </>
+        );
+      })}
+ 
+    </Box> */}
+    <Grid item xs={12} sm={12}>
+      <FormControl>
+        <FormLabel id="demo-row-radio-buttons-group-label">
+          Click Only one Category
+        </FormLabel>
+        {categ?.length > 0 &&
+          categ.map((data) => {
+            return (
+              <RadioGroup
+                row
+                value={input.categoryId ? input.categoryId : 0}
+                name="categoryId"
+                onChange={(e) => handleInputChange(e)}
+                error={error && !input?.categoryId}
+              >
+                <FormControlLabel
+                  control={<Radio />}
+                  value={data?.individualCategoryId}
+                  label={data?.category}
+                />
+              </RadioGroup>
+            );
+          })}
+      </FormControl>
+    </Grid>
+  </Grid>
+</DialogContent>
+<DialogActions>
+  <Button
+    type="submit"
+    variant="contained"
+    color="secondary"
+    onClick={addData}
+  >
+    Add
+  </Button>
+
+  <Button
+    onClick={props.handleAddClose}
+    variant="contained"
+    color="secondary"
+  >
+    Close
+  </Button>
+</DialogActions>
+</Dialog>
+
+
+
+
+
+---------------------------------modify------------------
+import {
+  Dialog,
+  DialogTitle,
+  Grid,
+  FormControl,
+  Checkbox,
+  Box,
+  FormControlLabel,
+  Typography,
+  RadioGroup,
+  Radio,
+  FormLabel,
+  makeStyles,
+} from "@material-ui/core";
+import DialogBox  from '../components/HOC/Dialog';
+import React, { useState, useContext, useEffect } from "react";
+import {
+  TextField,
+  Button,
+  DialogActions,
+  DialogContent,
+} from "@material-ui/core";
+import axios from "axios";
+import CloseIcon from "@material-ui/icons/Close";
+import { IconButton } from "@material-ui/core";
+import { fetchUsers } from "../store";
+
+const useStyles = makeStyles({
+  margin:{
+    marginLeft: "500px"
+  }
+})
+const Add = (props) => {
+  const { fetchUsers,getData, error, setError } = props;
+const classes=useStyles();
+  
+  const [input, setInput] = useState({});
+  const [categ, setCateg] = useState([]);
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    if (name === "categoryId") {
+      setInput((prevState) => ({
+        ...prevState,
+        [name]: parseInt(value),
+      }));
+    } else {
+      setInput((prevState) => ({
+        ...prevState,
+        [name]: value,
+      }));
+    }
+  };
+  const addData = () => {
+    if (
+      !input?.userId ||
+      !input?.blogTitle ||
+      !input?.blogContent ||
+      !input?.categoryId
+    ) {
+      setError(true);
+    } else {
+      axios
+        .post(`http://localhost:8080/api/users/create-blog`, input)
+        .then(() => {
+         props.handleAddClose();
+         fetchUsers();
+          setInput({});
+        });
+    }
+  };
+
+  
+  useEffect(() => {
+    addCategory();
+  }, []);
+
+  const addCategory = () => {
+    axios
+      .get(`http://localhost:8080/api/users/getTags`)
+      .then((res) => setCateg(res.data));
+  };
+
+  //   console.log(byCategory)
+  // const byCategory = categ.sort((a,b)=>{
+  //   if(a.category > b.category){
+  //     return 1;
+  //   }
+  // else if(b.category > a.category){
+  //   return -1;
+  // }else{
+  //   return 0;
+  // }
+  // })
+
+  return (
+    <div>
+    <from>
+    <TextField
+        name="userId"
+        label="userId"
+        type="text"
+        value={input?.userId || ""}
+        onChange={handleInputChange}
+        error={error && !input?.userId}
+        fullWidth
+      /> 
+
+
+      <TextField
+        name="blogTitle"
+        label="BlogTitle"
+        type="text"
+        value={input?.blogTitle || ""}
+        onChange={handleInputChange}
+        error={error && !input?.blogTitle}
+        fullWidth
+      />
+       <TextField
+        name="blogContent"
+        label="BlogContent"
+        type="text"
+        value={input?.blogContent}
+        onChange={handleInputChange}
+        error={error && !input?.blogContent}
+        fullWidth
+      />
+        <TextField
+        name="categoryId"
+        label="categoryId"
+        type="text"
+        value={input?.categoryId}
+        error={error && input?.categoryId?.length===0}
+        onChange={handleInputChange}
+        required
+        fullWidth
+      />
+    </from>
+  
+      <DialogBox open={props.add} close={props.handleAddClose} >
+        
+      </DialogBox>
+    </div>
+  );
+};
+
+export default Add;
+
+
+-------------------------------------------old------------------
+import {
+  Dialog,
+  DialogTitle,
+  Grid,
+  FormControl,
+  Checkbox,
+  Box,
+  FormControlLabel,
+  Typography,
+  RadioGroup,
+  Radio,
+  FormLabel,
+  makeStyles,
+} from "@material-ui/core";
+import DialogBox  from '../components/HOC/Dialog';
+import React, { useState, useContext, useEffect } from "react";
+import {
+  TextField,
+  Button,
+  DialogActions,
+  DialogContent,
+} from "@material-ui/core";
+import axios from "axios";
+import CloseIcon from "@material-ui/icons/Close";
+import { IconButton } from "@material-ui/core";
+import { fetchUsers } from "../store";
+
+const useStyles = makeStyles({
+  margin:{
+    marginLeft: "500px"
+  }
+})
+const Add = (props) => {
+  const { fetchUsers,getData, error, setError } = props;
+const classes=useStyles();
+  
+  const [input, setInput] = useState({});
+  const [categ, setCateg] = useState([]);
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    if (name === "categoryId") {
+      setInput((prevState) => ({
+        ...prevState,
+        [name]: parseInt(value),
+      }));
+    } else {
+      setInput((prevState) => ({
+        ...prevState,
+        [name]: value,
+      }));
+    }
+  };
+  const addData = () => {
+    if (
+      !input?.userId ||
+      !input?.blogTitle ||
+      !input?.blogContent ||
+      !input?.categoryId
+    ) {
+      setError(true);
+    } else {
+      axios
+        .post(`http://localhost:8080/api/users/create-blog`, input)
+        .then(() => {
+         props.handleAddClose();
+         fetchUsers();
+          setInput({});
+        });
+    }
+  };
+
+  
+  useEffect(() => {
+    addCategory();
+  }, []);
+
+  const addCategory = () => {
+    axios
+      .get(`http://localhost:8080/api/users/getTags`)
+      .then((res) => setCateg(res.data));
+  };
+
+  //   console.log(byCategory)
+  // const byCategory = categ.sort((a,b)=>{
+  //   if(a.category > b.category){
+  //     return 1;
+  //   }
+  // else if(b.category > a.category){
+  //   return -1;
+  // }else{
+  //   return 0;
+  // }
+  // })
+
+  return (
+    <>
+      <Dialog open={props.add} close={props.handleAddClose}>
+        <DialogContent>
+          <IconButton className={classes.margin}  color="secondary" onClick={props.handleAddClose}>
+            <CloseIcon />
+          </IconButton>
+          <DialogTitle>Add Blog</DialogTitle>
+
+          <Grid container spacing={1}>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                name="userId"
+                label="userId"
+                type="text"
+                value={input?.userId || ""}
+                onChange={handleInputChange}
+                error={error && !input?.userId}
+                fullWidth
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                name="blogTitle"
+                label="BlogTitle"
+                type="text"
+                value={input?.blogTitle || ""}
+                onChange={handleInputChange}
+                error={error && !input?.blogTitle}
+                fullWidth
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                name="blogContent"
+                label="BlogContent"
+                type="text"
+                value={input?.blogContent}
+                onChange={handleInputChange}
+                error={error && !input?.blogContent}
+                fullWidth
+              />
+            </Grid>
+            {/* <Grid item xs={12} sm={6}>
+              <TextField
+                name="categoryId"
+                label="categoryId"
+                type="text"
+                value={input?.categoryId}
+                error={error && input?.categoryId?.length===0}
+                onChange={handleInputChange}
+                required
+                fullWidth
+              />
+            </Grid> */}
+
+            {/* <Grid item xs={12} sm={12}>
+              {categ.map((i) => {
+                   console.log(i)
+                return <>
+                <h1>{i?.category}</h1>
+                </>;
+              })}
+            </Grid>  */}
+
+            {/* <Box>
+              <Typography>Click Only one Category</Typography>
+              {categ.length>0 && categ.map((i) => {
+                   
+                return  (<>
+                  <FormControlLabel
+                    control={<Checkbox  onChange={e=>handleCategoryChange(e)} />}
+                    label={i?.category}
+                   name={i?.category}
+                     value={true}
+                   
+                    checked={categ[i.category] }
+                   
+                  />
+                  </>
+                );
+              })}
+         
+            </Box> */}
+            <Grid item xs={12} sm={12}>
+              <FormControl>
+                <FormLabel id="demo-row-radio-buttons-group-label">
+                  Click Only one Category
+                </FormLabel>
+                {categ?.length > 0 &&
+                  categ.map((data) => {
+                    return (
+                      <RadioGroup
+                        row
+                        value={input.categoryId ? input.categoryId : 0}
+                        name="categoryId"
+                        onChange={(e) => handleInputChange(e)}
+                        error={error && !input?.categoryId}
+                      >
+                        <FormControlLabel
+                          control={<Radio />}
+                          value={data?.individualCategoryId}
+                          label={data?.category}
+                        />
+                      </RadioGroup>
+                    );
+                  })}
+              </FormControl>
+            </Grid>
+          </Grid>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            type="submit"
+            variant="contained"
+            color="secondary"
+            onClick={addData}
+          >
+            Add
+          </Button>
+
+          <Button
+            onClick={props.handleAddClose}
+            variant="contained"
+            color="secondary"
+          >
+            Close
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </>
+  );
+};
+
+export default Add;

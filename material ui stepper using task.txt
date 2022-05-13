@@ -1,0 +1,413 @@
+--------------------index.js--------------------------
+import React from 'react';
+import ReactDOM from 'react-dom';
+import './index.css';
+import App from './App';
+import {BrowserRouter as Router} from "react-router-dom";
+import reportWebVitals from './reportWebVitals';
+
+
+ReactDOM.render(
+
+  <React.StrictMode>
+    <Router>
+    <App />
+    </Router>
+    
+  </React.StrictMode>,
+  
+  document.getElementById('root')
+);
+
+// If you want to start measuring performance in your app, pass a function
+// to log results (for example: reportWebVitals(console.log))
+// or send to an analytics endpoint. Learn more: https://bit.ly/CRA-vitals
+reportWebVitals();
+
+
+
+
+
+
+
+----------------------------App.js------------------------
+import React from 'react';
+import { Route,Routes} from 'react-router-dom';
+import MultisepForm from './components/multisepForm';
+import './App.css';
+function App() {
+  return (
+    <div className='App' >
+    <Routes>
+    <Route  path="/" element={< MultisepForm/>}/>
+    </Routes>
+
+
+   </div>
+  );
+}
+
+export default App;
+
+
+----------------------------MultiStep.js------------------------
+
+import React, { useState } from "react";
+import {
+  Stepper,
+  Step,
+  StepLabel,
+  Typograohy,
+  Button,
+} from "@material-ui/core";
+import { makeStyles } from "@material-ui/core";
+import StepOne from "./StepOne";
+import StepTwo from "./StepTwo";
+import StepThree from "./StepThree";
+
+const useStyles = makeStyles({
+  root: {
+    width: "50%",
+    margin: "6rem auto",
+    border: "1px solid #999",
+    "& .MuiStepIcon-root.MuiStepIcon-active ": {
+      color: "red",
+    },
+    "& .MuiStepIcon-root.MuiStepIcon-completed ": {
+      color: "green",
+    },
+  },
+});
+const MultisepForm = (props) => {
+  const [activeStep, setActivestep] = useState(0);
+
+  const { step } = props;
+  const [formDetails, setFormDetails] = useState({});
+  const [plan, setPlan] = useState({});
+  function getsteps() {
+    return ["SIGNUP", "CHOOSE UP", "CHEAKOUT"];
+  }
+  const handleNext = (props) => {
+    console.log(formDetails);
+    setActivestep((prevActivestep) => prevActivestep + 1);
+  };
+  const handleprevious = (props) => {
+    setActivestep((prevActivestep) => prevActivestep - 1);
+  };
+  const steps = getsteps();
+  console.log(steps)
+  function getstepsContent(stepIndex) {
+    switch (stepIndex) {
+      case 0:
+        return <StepOne data={formDetails} setFormDetails={setFormDetails} />;
+      case 1:
+        return <StepTwo data={formDetails} setPlan={setPlan} />;
+      case 2:
+        return <StepThree data={formDetails} plan={plan} />;
+      default:
+        return "unknown step";
+    }
+  }
+  const classes = useStyles();
+  return (
+    <div className={classes.root}>
+      <Stepper activeStep={activeStep} alternativeLabel>
+        {steps.map((label) => (
+          <Step key={label}>
+            <StepLabel>{label}</StepLabel>
+          </Step>
+        ))}
+      </Stepper>
+      <>
+        {activeStep === steps.length ? (
+          "Thanks for submitting your document!  "
+        ) : (
+          <>
+            {getstepsContent(activeStep)}
+            <Button onClick={handleprevious}>
+              {" "}
+              {activeStep === 0 ? "" : "back"}
+            </Button>
+            <Button onClick={handleNext}>
+              {" "}
+              {activeStep === steps.length - 1 ? "Submit" : "Next"}
+            </Button>
+            
+          </>
+        )}
+      </>
+    </div>
+  );
+};
+export default MultisepForm;
+
+
+
+----------------------------------StepOne.js-----------------------------
+
+
+import React, { useState } from "react";
+import { makeStyles } from "@material-ui/core";
+import {
+  Typography,
+  Button,
+  Grid,
+  Checkbox,
+  TextField,
+  OutlinedInput,
+  FormControl,
+  InputLabel,
+  InputAdornment,
+  IconButton,
+} from "@material-ui/core";
+
+import PhoneInput from "react-phone-input-2";
+import Visibility from "@material-ui/icons/Visibility";
+import VisibilityOffIcon from "@material-ui/icons/VisibilityOff";
+import SendSharpIcon from "@material-ui/icons/SendSharp";
+
+const useStyles = makeStyles({
+  mainContianer: {
+    display: "grid",
+    justifyContent: "center",
+    position: "relative",
+    zIndex: 5,
+  },
+  formContontianer: {
+    position: "relative",
+    width: "28.125rem",
+    height: "auto",
+    padding: "2rem",
+  },
+  inputField: {
+    width: "100%",
+    marginBottom: "1rem",
+  },
+});
+
+const StepOne = (props) => {
+
+  function handleNext() {
+   console.log(props.data);
+  }
+
+  const classes = useStyles();
+
+  const [showPasswordValue, setShowPasswordValue] = useState({
+    showPassword: false,
+  });
+  const [showConfirmPasswordValue, setShowConfirmPasswordValue] = useState({
+    showConfirmPassword: false,
+  });
+  const handleClickShowPassword = () => {
+    setShowPasswordValue({
+      showPassword: !showPasswordValue.showPassword,
+    });
+  };
+  const handleClickConfirmShowPassword = () => {
+    setShowConfirmPasswordValue({
+      showConfirmPassword: !showConfirmPasswordValue.showConfirmPassword,
+    });
+  };
+
+  const handleInputChange =(e)=>{
+    const {name ,value} = e.target
+    props.setFormDetails((prev)=> ({
+      ...prev,
+      [name]: value,
+    })
+  )}
+  return (
+    <div className={classes.mainContianer}>
+      <Typography variant="h5" style={{ color: "#999", textAlign: "center" }}>
+        Sign Up with Email
+      </Typography>
+      <div className={classes.formContontianer}>
+        <form onSubmit={handleNext}>
+          <TextField
+            style={{ width: "100%", margin: "1rem 0" }}
+            label="First Name"
+            name= "firstName"
+            variant="outlined"
+            onInput={(e) => handleInputChange(e)}
+          />
+          <TextField
+            style={{ width: "100%", margin: "1rem 0" }}
+            label="Last Name"
+            name= "lastName"
+            variant="outlined"
+            onInput={(e) => handleInputChange(e)}
+          />
+          <PhoneInput
+            className={classes.inputField}
+            country={"in"}
+            name= "phone"
+            onInput={(e) => handleInputChange(e)}
+          />
+          <TextField
+            className={classes.inputField}
+            label="Email"
+            name= "email"
+            variant="outlined"
+            onInput={(e) => handleInputChange(e)}
+          />
+          <FormControl
+            className={classes.inputField}
+            variant="outlined"
+            onInput={(e) => handleInputChange(e)}
+          >
+            <InputLabel>Password</InputLabel>
+            <OutlinedInput
+              type={showPasswordValue.showPassword ? "text" : "password"}
+              labelWidth={70}
+              name= "password"
+              endAdornment={
+                <InputAdornment position="end">
+                  <IconButton edge="end" onClick={handleClickShowPassword}>
+                    {showPasswordValue.showPassword ? (
+                      <Visibility />
+                    ) : (
+                      <VisibilityOffIcon />
+                    )}
+                  </IconButton>
+                </InputAdornment>
+              }
+            />
+          </FormControl>
+          <FormControl
+            className={classes.inputField}
+            variant="outlined"
+            onInput={(e) => handleInputChange(e)}
+          >
+            <InputLabel>Confirm Password</InputLabel>
+            <OutlinedInput
+              type={
+                showConfirmPasswordValue.showConfirmPassword
+                  ? "text"
+                  : "password"
+              }
+              labelWidth={135}
+              name= "cpassword"
+              endAdornment={
+                <InputAdornment position="end">
+                  <IconButton
+                    edge="end"
+                    onClick={handleClickConfirmShowPassword}
+                  >
+                    {showConfirmPasswordValue.showConfirmPassword ? (
+                      <Visibility />
+                    ) : (
+                      <VisibilityOffIcon />
+                    )}
+                  </IconButton>
+                </InputAdornment>
+              }
+            />
+          </FormControl>
+          <>
+            {/* <Button
+              className={classes.btn}
+              variant="contained"
+              type="submit"
+              endIcon={<SendSharpIcon />}
+            >
+              Sign Up
+            </Button> */}
+          </>
+        </form>
+      </div>
+    </div>
+  );
+};
+
+export default StepOne;
+
+
+----------------------StepTWo.js-----------------------------
+
+
+import React, { useState } from "react";
+import {Button } from "@material-ui/core";
+import {useNavigate} from 'react-router-dom'
+import {  Typography,Card,CardContent,Grid,TextField} from '@material-ui/core';
+import Radio from '@material-ui/core/Radio';
+import RadioGroup from '@material-ui/core/RadioGroup';
+
+import {  FormControlLabel } from '@material-ui/core';
+import StepThree from './StepThree';
+
+const StepTwo = (props) => {
+  console.log(props.data)
+    const [radioChange,setRadioChange]=useState("");
+    // const{step}=props;
+    // console.log("props");
+    const handlePlanChange =(e)=>{
+      const {name ,value} = e.target
+      props.setPlan((prev)=> ({
+        ...prev,
+        [name]: value,
+      })
+    )}
+
+    return ( 
+<div>
+<RadioGroup row aria-label="Enter detail" name="planInfo"  onClick={(e)=> handlePlanChange(e) }>
+  <FormControlLabel value="Stander Plan $150" control={<Radio/>} label="Standard Plan $150"/>
+  <FormControlLabel value="Perimun plan $799" control={<Radio/>} label="Perimum Plan $799"/>
+</RadioGroup>
+{props.data.name}
+
+{/* <StepThree step={radioChange} data={data}  name="Surya"/> */}
+
+
+{/* {props.data.map((i)=>{
+  return (
+    <h1>{i}</h1>
+  )
+})} */}
+</div>
+     );
+}
+ 
+export default StepTwo ;
+
+
+-----------------------------------StepThree.js------------------------
+import React from "react";
+
+const StepThree = (props) => {
+     console.log(props.data)
+    return ( 
+        <div>
+            <>
+            {/* <h1  onClick={(e) => props.step(e.target.value)}></h1> */}
+            <i> User Information </i>
+           
+            <h3>FirstName:{props.data.firstName}</h3>
+            <h3>LastName:{props.data.lastName}</h3>
+            <h3>EMail:{props.data.email}</h3>
+            <h3>{props.data.phone}</h3>
+            <h3>Pasword{props.data.password}</h3>
+            <h3>CPassword{props.data.cpassword}</h3>
+            </>
+            <div>
+                <h1>Selected Plan</h1>
+                <h3><i>{props.plan.planInfo}</i></h3>
+            </div>
+        </div>
+     );
+}
+ 
+export default StepThree ;
+
+
+
+
+
+
+
+
+
+
+
+

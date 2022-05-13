@@ -1,0 +1,1444 @@
+-------------------------------App.js----------------------------
+import React from "react";
+import "./App.css";
+import BlogSpot from "./views/BlogSpot";
+import BlogList from "./views/BlogList";
+import ReadMore from "./views/ReadMore";
+import Login from "./views/Login";
+
+import { Route, Routes } from "react-router-dom";
+
+import Add from "./views/Add"
+import { Provider } from "react-redux";
+
+import store from "./store/reduxStore";
+
+function App() {
+  return (
+    <div className="App">
+      <Provider store={store}>
+        <Routes>
+          <Route exact path="/" element={<BlogSpot />} />
+          <Route path="/Real" element={<BlogList />} />
+          <Route path="/Add" element={<Add />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/readmore/:individualBlogId" element={<ReadMore />} />
+        </Routes>
+      </Provider>
+    </div>
+  );
+}
+
+export default App;
+
+
+-------------------------BlogSpot.js---------------------------------
+import React from "react";
+import { useEffect, useState } from "react";
+import Login from "./Login";
+import BlogList from "./BlogList";
+import Add from "./Add";
+import DialogBox from "../components/HOC/Dialog";
+import { Grid } from "@material-ui/core";
+
+import {
+  AppBar,
+  Button,
+  Toolbar,
+  Typography
+} from "@material-ui/core";
+import { makeStyles } from "@material-ui/core";
+// import Register from "./Register";
+
+import { connect } from "react-redux";
+import { fetchUsers } from "../store";
+
+const useStyles = makeStyles((theme) => ({
+  root: {
+    paddingBottom: theme.spacing(10),
+  },
+  position:{
+    marginLeft: "650px"
+  },
+  addBtn:{
+    marginLeft: "1500px", marginBlock: "10px"
+  },
+  regBtn:{
+    marginLeft: "20px" 
+  },
+  logBtn:{
+    marginLeft: "650px" 
+  }
+}));
+const Blogspot = ({ userData, fetchUsers }) => {
+const classes=useStyles();
+
+  useEffect(() => {
+    fetchUsers();
+  }, []);
+  const getData = userData.data;
+
+  getData.sort((a, b) => (a.individualBlogId > b.individualBlogId ? -1 : 1));
+  
+
+  const [error, setError] = useState(false);
+
+  const [open, setOpen] = useState(false);
+  const [add, setAdd] = useState(false);
+  // const [submit, setSubmit] = useState({});
+  // const [reg, setReg] = useState(false);
+
+  const handleClickOpen = () => {
+    setOpen(true);
+  };
+
+  const handleClose = () => {
+    setOpen(false);
+  };
+
+  const handleAdd = () => {
+    setAdd(true);
+  };
+  const handleAddClose = () => {
+    setAdd(false);
+  };
+  // const handleReg = () => {
+  //   setReg(true);
+  // };
+  // const handleRegClose = () => {
+  //   setReg(false);
+  // };
+
+  const setAdded = (addData) => {
+    if (addData) {
+      getData([...getData, addData]);
+    }
+  };
+
+  return (
+    <div
+    
+    >
+      <AppBar position="static">
+        <Toolbar>
+          <Typography variant="h2" className={classes.position}>
+            Home
+          </Typography>
+          <Button
+            color="secondary"
+            variant="contained"
+           className={classes.logBtn}
+            onClick={handleClickOpen}
+          >
+            Login
+          </Button>
+
+
+          <Button
+            color="secondary"
+            variant="contained"
+          className={classes.regBtn}
+            // onClick={handleReg}
+          >
+            Register
+          </Button>
+        </Toolbar>
+      </AppBar>
+
+      <Button
+        variant="contained"
+        color="secondary"
+        className={classes.addBtn}
+        onClick={handleAdd}
+      >
+        Add Blogs
+      </Button>
+      {/* <Login
+        handleClose={handleClose}
+        open={open}
+        error={error}
+        setError={setError}
+      /> */}
+ <DialogBox open={open} 
+      handleCloseDialog={handleClose}
+      title="Login Blogs"
+ >
+     
+     <Grid item xs={12} sm={12}>
+     <Login  handleCloseDialog={handleClose} setError={setError} error={error} />
+   </Grid>
+   
+ </DialogBox>
+
+      <BlogList getData={getData} />
+
+   
+      <DialogBox open={add} 
+       handleCloseDialog={() => handleAddClose()}
+       title="Add Blogs"
+      > 
+      
+       <Grid item xs={12} sm={12}>
+        <Add   handleAddClose={handleAddClose}
+        add={add}
+        setAdded={setAdded}
+        getData={getData}
+        fetchUsers={fetchUsers}
+        error={error}
+        setError={setError}/>
+        </Grid>
+        
+      </DialogBox>
+      {/* <Register reg={reg} handleRegClose={handleRegClose} /> */}
+    </div>
+  );
+};
+
+const mapStateToProps = (state) => {
+  return {
+    userData: state.user,
+  };
+};
+
+const mapDispatchToProps = (dispatch) => {
+  return {
+    fetchUsers: () => dispatch(fetchUsers()),
+  };
+};
+
+export default connect(mapStateToProps, mapDispatchToProps)(Blogspot);
+
+
+-----------------------------BlogList--------------------------------
+import { React, useContext, useEffect, useState } from "react";
+import { makeStyles } from "@material-ui/core/styles";
+import {
+  Chip,
+  Grid,
+  Box,
+  TextField,
+  CardMedia,
+  Card,
+  CardActionArea,
+  Button,
+} from "@material-ui/core";
+import Typography from "@material-ui/core/Typography";
+import Batman from "../assests/Batman.jpg"; 
+import Fire from "../assests/fire.jpg"
+import IconButton from "@material-ui/core/IconButton";
+import FavoriteIcon from "@material-ui/icons/Favorite";
+import YouTubeIcon from "@material-ui/icons/YouTube";
+import { Link } from "react-router-dom";
+import Pagination from "@material-ui/lab/Pagination";
+import usePagination from "./Pagination";
+import axios from "axios";
+import SearchIcon from "@material-ui/icons/Search";
+import { InputAdornment } from "@material-ui/core";
+import CloseIcon from "@material-ui/icons/Close";
+import Error from "../assests/Error.png"
+import InstagramIcon from "@material-ui/icons/Instagram";
+import { motion } from "framer-motion";
+
+
+
+const useStyles = makeStyles((theme) => ({
+  root: {
+    flexGrow: 1,
+  },
+  paper: {
+    padding: theme.spacing(1),
+    margin: "40px",
+    maxWidth: 350,
+    maxHeight: 350,
+    transform: 'scale3d(1.05, 1.05, 1)',
+    boxShadow: '0 0 1px 0 rgba(0,0,0,0.31), 0 6px 15px -2px rgb(0 70 139 / 40%)'
+ 
+  },
+
+  pic: {
+    margin: "auto",
+    marginLeft: "300px",
+    height:"500px"
+ 
+  },
+  read:{
+    backgroundColor: "secondary",
+    color: "white",
+    textDecoration: "none",
+    marginLeft: "120px",
+
+  },
+
+  newColor: {
+    backgroundColor: "secondary",
+    color: "white",
+    textTransform: "none",
+    textDecoration: "none",
+  },
+  pageColor: {
+    color: "yellow",
+    textTransform: "none",
+    marginLeft: "600px", 
+    textEmphasisColor: "GrayText"
+  },
+  addColor: {
+    backgroundColor: "green",
+    color: "white",
+    textTransform: "none",
+  },
+  blog: {
+    position: "relative",
+    display: "block",
+    // width:"35px",
+    // height:"35px",
+    borderRadius: "50%",
+    backgroundColor: "#fff",
+    textAlign: "center",
+    transition: "-10%",
+    boxShadow: "0 5px 4px rgba(.5,.5,.5,.5)",
+  },
+
+  magic: {
+    position: "justify",
+    display: "radius",
+    width: "45px",
+    height: "45px",
+    backgroundColor: "#fff",
+    textAlign: "center",
+    transition: "10%",
+    boxShadow: "0 5px 4px rgba(.5,.5,.5,.5)",
+  
+  },
+  lay:{
+    backgroundColor:"blue",
+     color:"white"
+  },
+  flex:{
+    display: "flex"
+  },
+  line:{
+    textDecoration: "none"
+  },
+  searchs:{
+    width: "60%",
+    borderBlockColor: "greenyellow",
+    backgroundColor: "white",
+  }
+ 
+ 
+}));
+
+const loaderVariants = {
+  animationTwo: {
+    y: [0, 40],
+    x: 0,
+    transition: {
+      y: {
+        yoyo: Infinity,
+        // duration: 0.1,
+        delay: 0.5,
+        ease: "easeOut",
+      },
+    },
+  },
+};
+
+const Real = ({getData}) => {
+  const data=getData; 
+  console.log(data)
+  // const [data] = useContext(Context);
+  const [tmpData, setTmpData] = useState(data);
+  const classes = useStyles();
+  const [page, setPage] = useState(1);
+  const [categ, setCateg] = useState([]);
+  const [filtered, setFiltered] = useState("");
+  const [blogTitle, setBlogTitle] = useState("");
+
+  const PerPage = 4;
+
+  const count = Math.ceil(tmpData.length / PerPage);
+  let Data = usePagination(tmpData, PerPage);
+
+  const filter = (e) => {
+    // setPage(1)
+    // Data.jump(1)
+    setBlogTitle(e.target.value);
+  };
+
+  const handlePageChange = (e, p) => {
+    setPage(p);
+    Data.jump(p);
+  };
+
+  const handleTagChange = (value) => {
+    setPage(1);
+    Data.jump(1);
+    setFiltered(value);
+  };
+
+  useEffect(() => {
+    addCategory();
+  }, []);
+
+  useEffect(() => {
+    setTmpData(data);
+  }, [data]);
+
+  useEffect(() => {
+    let temp = data;
+    if (filtered !== "") {
+      temp = temp.filter((task) => task.categoryId === filtered);
+    }
+
+    if (blogTitle !== " ") {
+      temp = temp.filter((user) =>
+        user.blogTitle.toLowerCase().includes(blogTitle.toLowerCase())
+      );
+    }
+    setTmpData(temp);
+  }, [filtered, blogTitle]);
+
+  const addCategory = () => {
+    axios.get(`http://localhost:8080/api/users/getTags`).then((res) => {
+      setCateg(res.data);
+    });
+  };
+  const surya = categ.filter((item) => item.individualCategoryId === filtered);
+  return (
+    <div className={classes.root}>
+      <Grid className={classes.flex}>
+        <Grid item xs={10}>
+          <TextField
+            color="secondary"
+            type="search"
+            variant="outlined"
+            className={classes.searchs}
+            placeholder="Search......"
+            size="small"
+            value={blogTitle}
+            onChange={filter}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment>
+                  <IconButton>
+                    <SearchIcon />
+                  </IconButton>
+                </InputAdornment>
+              ),
+            }}
+          />
+
+          {blogTitle ? (
+            <Grid>
+              <Typography>
+                search result is : '{blogTitle}'
+                <IconButton
+                  color="secondary"
+                  onClick={() => {
+                    setBlogTitle("");
+                  }}
+                >
+                  <CloseIcon />
+                </IconButton>
+              </Typography>
+              <Grid container item xs>
+                {Data.currentData().length > 0 ? (
+                  Data.currentData().map((datas) => {
+                    {
+                      return (
+                        <div>
+                          <motion.div
+                            whileHover={{
+                              scale: 1.1,
+                            }}
+                            transition={{ delay: 1.5, duration: 5 }}
+                          >
+                            <Card
+                              className={classes.paper}
+                              style={{
+                                backgroundColor: "whtieSmoke",
+                              }}
+                            >
+                              <CardActionArea>
+                                <CardMedia
+                                  component="img"
+                                  height="230"
+                                  src={Batman}
+                                />
+                                <Typography variant="h5" color="secondary">
+                                  {datas?.user?.name}
+                                </Typography>
+
+                                <Typography>
+                                  BlogTitle: {datas?.blogTitle}
+                                </Typography>
+
+                                <Typography>
+                                  Category: {datas?.blogTag?.category}
+                                </Typography>
+
+                                <Box>
+                                  <IconButton color="secondary">
+                                    <FavoriteIcon />
+                                  </IconButton>
+                                  <Link
+                                    className={classes.line}
+                                    to={`/readmore/${datas.individualBlogId}`}
+                                  >
+                                    <Chip
+                                      className={classes.read}
+                                      label="Read More"
+                                      color="secondary"
+                                      clickable
+                                    />
+                                  </Link>
+                                </Box>
+                              </CardActionArea>
+                            </Card>
+                          </motion.div>
+                        </div>
+                      );
+                    }
+                  })
+                ) : (
+                  <div>
+                    <p>Blog not found!......</p>
+                    <CardMedia
+                      component="img"
+                      className={classes.pic}
+                      src={Error}
+                    />
+                  </div>
+                )}
+              </Grid>
+            </Grid>
+          ) : (
+            <Grid container item xs>
+              {Data.currentData().map((datas) => {
+                {
+                  return (
+                    <>
+                      <Card
+                        className={classes.paper}
+            
+                      >
+                        <CardActionArea>
+                          <CardMedia
+                            component="img"
+                            height="230"
+                            src={Batman}
+                          />
+                          <Typography variant="h5" color="secondary">
+                            {datas?.user?.name}
+                          </Typography>
+
+                          <Typography>BlogTitle: {datas?.blogTitle}</Typography>
+
+                          <Typography>
+                            Category: {datas?.blogTag?.category}
+                          </Typography>
+
+                          <Box>
+                            <IconButton color="secondary">
+                              <FavoriteIcon />
+                            </IconButton>
+                            <Link
+                               className={classes.line}
+                              to={`/readmore/${datas.individualBlogId}`}
+                            >
+                              <Chip
+                                className={classes.read}
+                                label="Read More"
+                          
+                                color="secondary"
+                                clickable
+                              />
+                            </Link>
+                          </Box>
+                        </CardActionArea>
+                      </Card>
+                    </>
+                  );
+                }
+              })}
+            </Grid>
+          )}
+
+          <Box>
+            <Grid item xs={12} sm={12}>
+              <Pagination
+                className={classes.pageColor}
+                size="large"
+                page={page}
+                count={count}
+                color="secondary"
+                variant="outlined"
+                onChange={handlePageChange}
+              />
+            </Grid>
+          </Box>
+        </Grid>
+        <Grid item xs={2} className={classes.flex} >
+          <Box
+          
+            sx={{ justifyContent: "flex-end" }}
+          >
+            <Typography color="secondary">Quick view to Category</Typography>
+            {filtered ? (
+              <Grid>
+                <Typography type="search">
+                  Search result is: {surya[0].category}
+                  <IconButton
+                    color="secondary"
+                    onClick={() => {
+                      setFiltered("");
+                    }}
+                  >
+                    <CloseIcon />
+                  </IconButton>
+                </Typography>
+
+                {categ?.length > 0 &&
+                  categ.map((d) => {
+                    return (
+                      <Chip
+                        label={d.category}
+                        className={
+                          d.individualCategoryId === filtered
+                            ? classes.addColor
+                            : classes.newColor
+                        }
+                        value={d?.individualCategoryId}
+                        clickable
+                        onClick={() => handleTagChange(d.individualCategoryId)}
+                        color="secondary"
+                      />
+                    );
+                  })}
+              </Grid>
+            ) : (
+              <Grid>
+                {categ?.length > 0 &&
+                  categ.map((d) => {
+                    return (
+                      <Chip
+                        label={d.category}
+                        className={
+                          d.individualCategoryId === filtered
+                            ? classes.addColor
+                            : classes.newColor
+                        }
+                        value={d?.individualCategoryId}
+                        clickable
+                        onClick={() => handleTagChange(d.individualCategoryId)}
+                        color="secondary"
+                      />
+                    );
+                  })}
+              </Grid>
+            )}
+          </Box>
+        </Grid>
+      </Grid>
+      <footer  >
+        
+        <Grid container className={classes.lay} >
+          <Grid item xs={4}>
+            <Typography color="secondary" variant="h4">Cast List</Typography>
+            <Typography variant="h5"># Batman</Typography>
+            <Typography variant="h5"># JOKER</Typography>
+            <Typography variant="h5"># Catwomen</Typography>
+          </Grid>
+          <Grid item xs={4}>
+        
+            <Typography color="secondary" variant="h4">About</Typography>
+            <Typography variant="h5"># Action</Typography>
+            <Typography variant="h5"># Am RIch</Typography>
+            <Typography variant="h5"># Batman</Typography>
+          </Grid>
+
+          <Grid item xs={4} position="center">
+          <Typography color="secondary" variant="h4">Contact Us</Typography>
+            <motion.div
+              className="loader"
+              variants={loaderVariants}
+              animate={"animationTwo"}
+            
+            >
+              <IconButton
+                color="secondary"
+                href="https://en.wikipedia.org/wiki/Batman#:~:text=Batman%20was%20originally%20introduced%20as,%2C%20fighting%20skills%2C%20and%20wealth."
+              >
+                <InstagramIcon className={classes.magic} />
+              
+              </IconButton>
+
+              <IconButton
+                color="secondary"
+                href="https://www.youtube.com/results?search_query=batman+tra"
+              >
+                <YouTubeIcon className={classes.magic} />
+              </IconButton>
+            </motion.div>
+          </Grid>
+           {/* <FontAwesomeIcon icon="fas fa-bat" /> */}
+          
+          <Grid xs={12}>
+        <Typography>Copyright © 2022 blogSpot.com</Typography>
+      </Grid>
+        </Grid>
+     
+      </footer>
+    </div>
+  );
+};
+
+export default Real;
+
+
+
+------------------------ReadMore.js---------------------------------
+import React, { useState, useEffect } from "react";
+import { useParams } from "react-router";
+
+import Batman from "../assests/Batman.jpg";
+import {
+  Paper,
+  Typography,
+  Grid,
+  Button,
+  TextField,
+  makeStyles,
+  Chip,
+} from "@material-ui/core";
+import axios from "axios";
+import { useNavigate } from "react-router";
+import { connect } from "react-redux";
+import { fetchUsers } from "../store";
+import DialogBox from "../components/HOC/Dialog";
+
+const useStyles = makeStyles({
+  newAppBtnA: {
+    background: "blueviolet",
+    color: "white",
+    textTransform: "none",
+    marginLeft: "850px",
+  },
+  newAppBtnB: {
+    background: "blueviolet",
+    color: "white",
+    textTransform: "none",
+    marginLeft: "150px",
+  },
+  newAppBtn: {
+    background: "blueviolet",
+    color: "white",
+    textTransform: "none",
+  },
+  closbtn: {
+    marginLeft: "500px",
+  },
+});
+
+const Pos = ({ userData }) => {
+  const data = userData.data;
+
+  const classes = useStyles();
+  const navigate = useNavigate();
+
+  const { individualBlogId } = useParams();
+  const [edit, setEdit] = useState(false);
+
+  const [bag, setBag] = useState();
+  const [update, setUpdate] = useState();
+  const [use, setUse] = useState();
+  const [comment, setComment] = useState({});
+  const [del, setDel] = useState(false);
+  const [cdata, setCdata] = useState(null);
+  const [error, setError] = useState(false);
+  console.log(error);
+  const handleComment = (e) => {
+    const { value } = e.target;
+    setComment(value);
+  };
+
+  const handleUpdate = (e) => {
+    const { name, value } = e.target;
+
+    setUse((prevState) => ({
+      ...prevState,
+      [name]: value,
+    }));
+  };
+
+  const handleDel = () => {
+    setDel(true);
+  };
+  const handleDelClose = () => {
+    setDel(false);
+  };
+
+  const handleEdit = () => {
+    setEdit(true);
+    setUse(update);
+  };
+  const handleEditClose = () => {
+    setEdit(false);
+  };
+
+  useEffect(() => {
+    const selectedData = data.filter(
+      (data) => data.individualBlogId == individualBlogId
+    );
+
+    setBag(selectedData);
+  }, [individualBlogId]);
+
+  useEffect(() => {
+    singleBlog();
+  }, []);
+
+  useEffect(() => {
+    commentData();
+  }, []);
+
+  const singleBlog = () => {
+    axios
+      .get(`http://localhost:8080/api/users/singleblog/${individualBlogId}`)
+      .then((res) => setUpdate(res.data));
+  };
+
+  const deleteData = () => {
+    axios
+      .delete(`http://localhost:8080/api/users/delete-blog/${individualBlogId}`)
+      .then(() => {
+        // getData();
+        navigate("/");
+      });
+  };
+
+  const UpdateData = () => {
+    if (!use?.categoryId || !use?.blogTitle || !use?.blogContent) {
+      setError(true);
+    } else {
+      axios
+        .put(
+          `http://localhost:8080/api/users/update-blog/${individualBlogId}`,
+          use
+        )
+        .then(() => {
+          singleBlog();
+        });
+      handleEditClose();
+    }
+  };
+
+  const createComment = () => {
+    if (comment?.comments === "") {
+      setError(true);
+    } else {
+      axios
+        .post(`http://localhost:8080/api/users/create-comment/`, {
+          userId: update?.userId,
+          blogId: update?.individualBlogId,
+          userComment: comment,
+        })
+        .then(() => {
+          commentData();
+          setComment({ comments: "" });
+        });
+    }
+  };
+
+  const commentData = () => {
+    axios
+      .get(`http://localhost:8080/api/users/blog-comments/${individualBlogId}`)
+      .then((res) => {
+        setCdata(res.data);
+      });
+  };
+
+  const Edit = () => {
+    return (
+      <div>
+        <Grid container spacing={1}>
+          <Grid item xs={12} sm={6}>
+            <TextField
+              name="categoryId"
+              label="categoryId"
+              value={use?.categoryId}
+              type="text"
+              onChange={handleUpdate}
+              error={error && use?.categoryId?.length === 0}
+              fullWidth
+            />
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <TextField
+              name="blogTitle"
+              value={use?.blogTitle}
+              label="BlogTitle"
+              type="text"
+              onChange={handleUpdate}
+              error={error && use?.blogTitle?.length === 0}
+              fullWidth
+            />
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <TextField
+              name="blogContent"
+              value={use?.blogContent}
+              error={error && use?.blogContent?.length === 0}
+              label="BlogContent"
+              type="text"
+              onChange={handleUpdate}
+              fullWidth
+            />
+          </Grid>
+        </Grid>
+
+        <Button variant="contained" color="secondary" onClick={UpdateData}>
+          Update
+        </Button>
+
+        <Button onClick={handleEditClose} variant="contained" color="secondary">
+          Close
+        </Button>
+      </div>
+    );
+  };
+
+  const Delete = () => {
+    return (
+      <div>
+        <Button
+          variant="contained"
+          color="secondary"
+          className={classes.newAppBtn}
+          onClick={deleteData}
+        >
+          Yes
+        </Button>
+        <Button
+          variant="contained"
+          color="secondary"
+          className={classes.newAppBtnB}
+          onClick={handleDelClose}
+        >
+          No
+        </Button>
+      </div>
+    );
+  };
+
+  return (
+    <div>
+      {bag && (
+        <Paper spacing={2}>
+          <Button
+            color="secondary"
+            variant="contained"
+            className={classes.newAppBtnA}
+            onClick={handleEdit}
+          >
+            Edit
+          </Button>
+          <Button
+            className={classes.newAppBtnB}
+            color="secondary"
+            variant="contained"
+            //onClick={deleteData}
+            onClick={handleDel}
+          >
+            Delete
+          </Button>
+          <Typography variant="h3" color="secondary">
+            BlogTitle: {update?.blogTitle}
+          </Typography>
+          <img src={Batman} />
+
+          <Typography>BlogContent: {update?.blogContent}</Typography>
+          <Typography>CategoryId: {update?.categoryId}</Typography>
+          <Typography>IndividualBlogId:{update?.individualBlogId}</Typography>
+          <Typography>UserId:{update?.userId}</Typography>
+          <Typography>Name:{update?.user?.name}</Typography>
+          <Typography>Email:{update?.user?.email}</Typography>
+          <Typography>Password:{update?.user?.password}</Typography>
+          <Chip
+            className={classes.newAppBtn}
+            label={update?.blogTag?.category}
+            style={{
+              marginLeft: "100px",
+            }}
+            color="secondary"
+            clickable
+          />
+
+          <TextField
+            label="Comments"
+            name="comments"
+            value={comment ? comment.comments : ""}
+            onChange={handleComment}
+            error={error && comment?.comments?.length === 0}
+            // style={{width:"80%"}}
+            multiline
+            rows={3}
+            variant="outlined"
+          />
+          <Typography>
+            {cdata?.length > 0 &&
+              cdata.map((data) => {
+                return (
+                  <Typography variant="outlined" multiline rows={4}>
+                    {data?.userComment}
+                  </Typography>
+                );
+              })}
+          </Typography>
+
+          <Button
+            color="secondary"
+            variant="contained"
+            className={classes.newAppBtn}
+            onClick={createComment}
+          >
+            Commont
+          </Button>
+          {/* </Card>
+          </Grid> */}
+        </Paper>
+      )}
+
+      <>
+        {/* Delte Yes or No  Dialog Box */}
+        <DialogBox
+          open={del}
+          handleCloseDialog={() => handleDelClose()}
+          title="Are You Sure to delete"
+        >
+          <Grid>
+            <Delete />
+          </Grid>
+        </DialogBox>
+      </>
+      <>
+        {/* Update Blog Dialog box */}
+        <DialogBox
+          open={edit}
+          handleCloseDialog={handleEditClose}
+          title="Update Blog"
+        >
+          <Grid>
+            <Edit />
+          </Grid>
+        </DialogBox>
+      </>
+    </div>
+  );
+};
+
+const mapStateToProps = (state) => {
+  return {
+    userData: state.user,
+  };
+};
+
+const mapDispatchToProps = (dispatch) => {
+  return {
+    fetchUsers: () => dispatch(fetchUsers()),
+  };
+};
+
+export default connect(mapStateToProps, mapDispatchToProps)(Pos);
+
+--------------------------Pagination---------------------
+
+import React, { useState } from "react";
+
+function usePagination(data, PerPage,filtered) {
+  const [currentPage, setCurrentPage] = useState(1);
+  const maxPage = Math.ceil(data.length / PerPage);
+
+
+    function currentData() {
+    const begin = (currentPage - 1) * PerPage;
+    const end = begin + PerPage;
+    return data.slice(begin, end);
+    
+
+  }
+
+  
+
+  function next() {
+    setCurrentPage(currentPage => Math.min(currentPage + 1, maxPage));
+  }
+
+  function prev() {
+    setCurrentPage(currentPage => Math.max(currentPage - 1, 1));
+  }
+
+  function jump(page) {
+    const pageNumber = Math.max(1, page);
+    setCurrentPage(currentPage => Math.min(pageNumber, maxPage));
+  }
+
+   return { next,prev,jump, currentData, currentPage, maxPage };
+ }
+
+export default usePagination;
+
+
+-------------------------Login.js------------------------------
+
+import React from "react";
+import { Button, Grid } from "@material-ui/core";
+import TextField from "@material-ui/core/TextField";
+import { useState } from "react";
+
+import { makeStyles } from "@material-ui/core";
+
+
+const useStyles = makeStyles({
+  head: {
+    marginLeft: "500px",
+  },
+  marg: {
+    marginLeft: "40px",
+  },
+  passMg: {
+    marginLeft: "20px",
+  },
+  newAppBtnB: {
+    background: "primary",
+    color: "white",
+    textTransform: "none",
+    marginLeft: "150px",
+  },
+});
+const Login = (props) => {
+  const classes = useStyles();
+  // const { error, setError } = props;
+  const [insert, setInsert] = useState({ emailid: "", password: "" });
+
+  const handleText = (e) => {
+    const { name, value } = e.target;
+    setInsert((prevState) => ({
+      ...prevState,
+      [name]: value,
+    }));
+  };
+
+  return (
+    <div>
+      <from>
+        <Grid container spacing={1}>
+          <Grid item xs={12} sm={6}>
+            <TextField
+              autoComplete="new-password"
+              name="emailid"
+              value={insert?.emailid}
+              onChange={handleText}
+              label="Email Id"
+              type="email"
+              fullWidth
+            />
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <TextField
+              name="password"
+              value={insert?.password}
+              onChange={handleText}
+              label="Password"
+              type="password"
+              fullWidth
+              inputProps={{
+                autocomplete: "new-password",
+                form: {
+                  autocomplete: "off",
+                },
+              }}
+            />
+          </Grid>
+        </Grid>
+        <Grid xs={12}>
+          <Button variant="contained" color="secondary">
+            Login
+          </Button>
+
+          <Button
+           variant="contained" color="secondary"
+            onClick={props.handleCloseDialog}
+          >
+            LogOut
+          </Button>
+        </Grid>
+      </from>
+    </div>
+  );
+};
+
+export default Login;
+
+
+------------------Add.js----------------------
+import {
+  
+  Grid,
+  FormControl,
+  
+  FormControlLabel,
+  RadioGroup,
+  Radio,
+  FormLabel,
+  makeStyles,
+} from "@material-ui/core";
+import React, { useState,  useEffect } from "react";
+import {
+  TextField,
+  Button,
+} from "@material-ui/core";
+import axios from "axios";
+import { fetchUsers } from "../store";
+
+const useStyles = makeStyles({
+  margin: {
+    marginLeft: "500px",
+  },
+});
+const Add = (props) => {
+  const { fetchUsers, getData, error, setError } = props;
+  const classes = useStyles();
+
+  const [input, setInput] = useState({});
+  const [categ, setCateg] = useState([]);
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    if (name === "categoryId") {
+      setInput((prevState) => ({
+        ...prevState,
+        [name]: parseInt(value),
+      }));
+    } else {
+      setInput((prevState) => ({
+        ...prevState,
+        [name]: value,
+      }));
+    }
+  };
+  const addData = () => {
+    if (
+      !input?.userId ||
+      !input?.blogTitle ||
+      !input?.blogContent ||
+      !input?.categoryId
+    ) {
+      setError(true);
+    } else {
+      axios
+        .post(`http://localhost:8080/api/users/create-blog`, input)
+        .then(() => {
+          props.handleAddClose();
+          fetchUsers();
+          setInput({});
+        });
+    }
+  };
+
+  useEffect(() => {
+    addCategory();
+  }, []);
+
+  const addCategory = () => {
+    axios
+      .get(`http://localhost:8080/api/users/getTags`)
+      .then((res) => setCateg(res.data));
+  };
+
+  return (
+    <div>
+   
+         <Grid container spacing={1}>
+        <Grid  item xs={12} sm={6}>
+          <TextField
+            name="userId"
+            label="userId"
+            type="text"
+            value={input?.userId || ""}
+            onChange={handleInputChange}
+            error={error && !input?.userId}
+          fullWidth
+          />
+          </Grid>
+          <Grid item xs={12} sm={6}>
+          <TextField
+            name="blogTitle"
+            label="BlogTitle"
+            type="text"
+            value={input?.blogTitle || ""}
+            onChange={handleInputChange}
+            error={error && !input?.blogTitle}
+            fullWidth
+          />
+          </Grid>
+          <Grid item xs={12} sm={6}>
+          <TextField
+            name="blogContent"
+            label="BlogContent"
+            type="text"
+            value={input?.blogContent}
+            onChange={handleInputChange}
+            error={error && !input?.blogContent}
+            fullWidth
+          />
+          </Grid>
+       
+         </Grid>
+          <Grid item xs={12} sm={12}>
+          <FormControl>
+            <FormLabel id="demo-row-radio-buttons-group-label">
+              Click Only one Category
+            </FormLabel>
+            {categ?.length > 0 &&
+              categ.map((data) => {
+                return (
+                  <RadioGroup
+                    row
+                    value={input.categoryId ? input.categoryId : 0}
+                    name="categoryId"
+                    onChange={(e) => handleInputChange(e)}
+                    error={error && !input?.categoryId}
+                  >
+                    <FormControlLabel
+                      control={<Radio />}
+                      value={data?.individualCategoryId}
+                      label={data?.category}
+                    />
+                  </RadioGroup>
+                );
+              })}
+          </FormControl>
+          </Grid>
+          <Grid>
+          <Button
+            type="submit"
+            variant="contained"
+            color="secondary"
+            onClick={addData}
+          >
+            Add
+          </Button>
+
+          <Button
+              // handleCloseDialog={() => props.handleAddClose()}
+              onClick={props.handleAddClose}
+            variant="contained"
+            color="secondary"
+          >
+            Close
+          </Button>
+        </Grid>
+
+    </div>
+  );
+};
+
+export default Add;
+
+--------------------------------------components/HOC/Dialog--------------------------------
+import React from 'react';
+import {makeStyles, withStyles} from '@material-ui/core/styles';
+import {
+  Dialog,
+  DialogContent,
+  Grid,
+  IconButton,
+  Typography,
+} from '@material-ui/core';
+import CloseIcon from '@material-ui/icons/Close';
+import MuiDialogTitle from '@material-ui/core/DialogTitle';
+
+const useStyles = makeStyles(theme => ({
+  root: {
+    margin: 0,
+    padding: theme.spacing(2)
+  },
+  dialogStyle: {
+    color: '#777777'
+    // height: 'calc(100vh - 50px)'
+  },
+  closeButton: {
+    position: 'absolute',
+    right: theme.spacing(1),
+    top: theme.spacing(1),
+    color: '#558de8'
+  }
+}));
+
+export default function DialogBox(props) {
+  const classes = useStyles();
+
+  const DialogTitle = withStyles(useStyles)(props => {
+    const {children, classes, onClose, closeButton, ...other} = props;
+    return (
+      <MuiDialogTitle disableTypography className={classes.root} {...other}>
+        <Grid container>
+          <Grid item xs={11}>
+            <Typography variant="h4" style={{margin: '1%'}}>
+              {children}
+            </Typography>
+          </Grid>
+          <Grid item xs={1}>
+            {onClose && closeButton ? (
+              <IconButton
+                aria-label="close"
+                style={{float: 'right'}}
+                className={classes.closeButton}
+                onClick={onClose}>
+                <CloseIcon />
+              </IconButton>
+            ) : null}
+          </Grid>
+        </Grid>
+      </MuiDialogTitle>
+    );
+  });
+
+  const {
+    stepperLable,
+    title,
+    children,
+    activeStep,
+    handleCloseDialog,
+    srceenWidth
+  } = props;
+
+  const closeButton =
+    props.closeButton === undefined ? true : props.closeButton;
+
+  return (
+    <div>
+      <Dialog
+        classes={{paper: classes.dialogStyle}}
+        open={props.open}
+        onClose={() => handleCloseDialog()}
+        maxWidth={srceenWidth ? srceenWidth : 'md'}
+        fullWidth={true}>
+        <DialogTitle
+          onClose={() => handleCloseDialog()}
+          closeButton={closeButton}>
+          {title}
+        </DialogTitle>
+        <DialogContent dividers>
+          <Grid container >
+    
+            {children}
+          </Grid>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
+----------------------------------

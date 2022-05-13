@@ -1,0 +1,300 @@
+import { React, useContext, useEffect, useState } from "react";
+import { makeStyles } from "@material-ui/core/styles";
+import { Chip, Grid, Box, TextField, Button } from "@material-ui/core";
+import Paper from "@material-ui/core/Paper";
+import Typography from "@material-ui/core/Typography";
+import Batman from "./Batman.jpg";
+import IconButton from "@material-ui/core/IconButton";
+import FavoriteIcon from "@material-ui/icons/Favorite";
+import { Link } from "react-router-dom";
+import { Context } from "./App";
+import Pagination from "@material-ui/lab/Pagination";
+import usePagination from "./Pagination";
+import axios from "axios";
+import SearchIcon from "@material-ui/icons/Search";
+import { InputAdornment } from "@material-ui/core";
+
+const useStyles = makeStyles((theme) => ({
+  root: {
+    flexGrow: 1,
+  },
+  paper: {
+    padding: theme.spacing(1),
+    margin: "40px",
+    maxWidth: 350,
+    maxHeight: 350,
+  },
+
+  img: {
+    margin: "auto",
+    maxWidth: "100%",
+    maxHeight: "60%",
+  },
+  newColor: {
+    backgroundColor: "blueviolet",
+    color: "white",
+    textTransform: "none",
+  },
+}));
+
+const Real = () => {
+  const [data] = useContext(Context);
+
+  const classes = useStyles();
+  const [page, setPage] = useState(1);
+  const [categ, setCateg] = useState([]);
+  const [filtered, setFiltered] = useState([]);
+  const [blogTitle, setBlogTitle] = useState("");
+  const [foundUsers, setFoundUsers] = useState(data);
+
+  const PerPage = 9;
+
+  const count = Math.ceil(data.length / PerPage);
+  let Data = usePagination(data, PerPage);
+
+  const filter = (e) => {
+    const keyword = e.target.value;
+
+    if (keyword !== "") {
+      const results = data.filter((user) => {
+        return user.blogTitle.toLowerCase().startsWith(keyword.toLowerCase());
+      });
+
+      setFoundUsers(results);
+    } else {
+      setFoundUsers(Data);
+    }
+
+    setBlogTitle(keyword);
+  };
+
+  const handlePageChange = (e, p) => {
+    setPage(p);
+    Data.jump(p);
+  };
+
+  const handleTagChange = (value) => {
+    const newData = data.filter((task) => task.categoryId === value);
+
+    setFiltered(newData);
+  };
+  console.log(filtered);
+  useEffect(() => {
+    addCategory();
+  }, []);
+
+  const addCategory = () => {
+    axios.get(`http://localhost:8080/api/users/getTags`).then((res) => {
+      setCateg(res.data);
+    });
+  };
+
+  return (
+    <div className={classes.root}>
+      <Grid style={{ display: "flex" }}>
+        <Grid>
+          <TextField
+            type="search"
+            variant="outlined"
+            style={{ width: "60%" }}
+            placeholder="Saerch......"
+            size="small"
+            value={blogTitle}
+            onChange={filter}
+            InputProps={{
+              endAdornment: (
+                <InputAdornment>
+                  <IconButton>
+                    <SearchIcon />
+                  </IconButton>
+                </InputAdornment>
+              ),
+            }}
+          />
+
+          {foundUsers?.length > 0 && foundUsers ? (
+            <Grid container item xs={12}>
+              {foundUsers.map((datas) => {
+                {
+                  return (
+                    <>
+                      <Paper
+                        className={classes.paper}
+                        style={{
+                          backgroundColor: "whtieSmoke",
+                          borderRadius: "4%",
+                        }}
+                      >
+                        <Typography>userName:{datas?.user?.name}</Typography>
+                        <img
+                          className={classes.img}
+                          style={{ borderRadius: "5%" }}
+                          src={Batman}
+                        />
+                        <Typography>BlogTitle: {datas?.blogTitle}</Typography>
+
+                        <Typography>
+                          Category: {datas?.blogTag?.category}
+                        </Typography>
+
+                        <Box>
+                          <IconButton color="secondary">
+                            <FavoriteIcon />
+                          </IconButton>
+                          <Link to={`/pos/${datas.individualBlogId}`}>
+                            <Chip
+                              className={classes.newColor}
+                              label="Read More"
+                              style={{
+                                marginLeft: "120px",
+                              }}
+                              color="secondary"
+                              clickable
+                            />
+                          </Link>
+                        </Box>
+                      </Paper>
+                    </>
+                  );
+                }
+              })}
+            </Grid> ) : filtered.length > 0 ? (
+            <Grid container item xs>
+              {filtered.map((datas) => {
+                {
+                  return (
+                    <>
+                      <Paper
+                        className={classes.paper}
+                        style={{
+                          backgroundColor: "whtieSmoke",
+                          borderRadius: "4%",
+                        }}
+                      >
+                        <Typography>userName:{datas?.user?.name}</Typography>
+                        <img
+                          className={classes.img}
+                          style={{ borderRadius: "5%" }}
+                          src={Batman}
+                        />
+                        <Typography>BlogTitle: {datas?.blogTitle}</Typography>
+
+                        <Typography>
+                          Category: {datas?.blogTag?.category}
+                        </Typography>
+
+                        <Box>
+                          <IconButton color="secondary">
+                            <FavoriteIcon />
+                          </IconButton>
+                          <Link to={`/pos/${datas.individualBlogId}`}>
+                            <Chip
+                              className={classes.newColor}
+                              label="Read More"
+                              style={{
+                                marginLeft: "120px",
+                              }}
+                              color="secondary"
+                              clickable
+                            />
+                          </Link>
+                        </Box>
+                      </Paper>
+                    </>
+                  );
+                }
+              })}
+            </Grid>
+          ) : (
+            <Grid container item xs>
+              {Data.currentData().map((datas) => {
+                {
+                  return (
+                    <>
+                      <Paper
+                        className={classes.paper}
+                        style={{
+                          backgroundColor: "whtieSmoke",
+                          borderRadius: "4%",
+                        }}
+                      >
+                        <Typography>userName:{datas?.user?.name}</Typography>
+                        <img
+                          className={classes.img}
+                          style={{ borderRadius: "5%" }}
+                          src={Batman}
+                        />
+                        <Typography>BlogTitle: {datas?.blogTitle}</Typography>
+
+                        <Typography>
+                          Category: {datas?.blogTag?.category}
+                        </Typography>
+
+                        <Box>
+                          <IconButton color="secondary">
+                            <FavoriteIcon />
+                          </IconButton>
+                          <Link to={`/pos/${datas.individualBlogId}`}>
+                            <Chip
+                              className={classes.newColor}
+                              label="Read More"
+                              style={{
+                                marginLeft: "120px",
+                              }}
+                              color="secondary"
+                              clickable
+                            />
+                          </Link>
+                        </Box>
+                      </Paper>
+                    </>
+                  );
+                }
+              })}
+            </Grid>
+          )}
+
+          <Box>
+            <Grid item xs={12} sm={12}>
+              <Pagination
+                style={{ marginLeft: "600px" }}
+                size="large"
+                page={page}
+                count={count}
+                variant="outlined"
+                color="secondary"
+                onChange={handlePageChange}
+              />
+            </Grid>
+          </Box>
+        </Grid>
+        {/* Split the screen Page */}
+        <Grid item xs={3}>
+          <Box style={{ marginBlock: "30px" }}>
+            <Typography color="secondary">Quick view to Category</Typography>
+            {categ?.length > 0 &&
+              categ.map((d) => {
+                return (
+                  <Chip
+                    label={d.category}
+                    className={classes.newColor}
+                    color="secondary"
+                    // style={{
+                    //   backgroundColor: "blueviolet",
+                    //   color: "white",
+                    // }}
+                    // variant="outlined"
+                    value={d?.individualCategoryId}
+                    clickable
+                    onClick={() => handleTagChange(d.individualCategoryId)}
+                  />
+                );
+              })}
+          </Box>
+        </Grid>
+      </Grid>
+    </div>
+  );
+};
+
+export default Real;

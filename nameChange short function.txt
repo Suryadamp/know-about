@@ -1,0 +1,17 @@
+import React,{useState} from 'react';
+
+const nameChange = () => {
+  const[name, setName]=useState("vignesh");
+
+  return (
+<div> 
+
+  <h1>{name}</h1>
+  <button onClick ={ () =>{
+    setName('surya')}}>clickMe</button>
+
+</div>
+
+  )
+}
+export default nameChange;

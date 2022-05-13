@@ -1,0 +1,27 @@
+
+ADD 
+
+1. GIT INIT
+2. GIT ADD .
+3. GIT COMMIT -M 'SURYA'
+4. GIT ADD REMOTE ORIGIN "LINK"
+5. GIT PUSH -U ORIGIN MASTER
+
+UPDATE 
+
+1. GIT INIT
+2. GIT REMOTE SET-URL ORIGIN "LINK"
+3. GIT ADD .
+4. GIT COMMIT -M 'CHAGNED'
+5. GIT PUSH -U ORIGIN MASTER
+
+
+
+GIT COMMIT 30.3.2022
+
+ git checkout .
+git checkout main
+git pull
+git checkout branch 
+git rebase origin/main
+git push -f		

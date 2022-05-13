@@ -1,0 +1,280 @@
+import React, { useEffect, useState } from "react";
+import { 
+    FormLabel,
+    FormControl, 
+    FormControlLabel, 
+    Grid, 
+    RadioGroup,
+    Radio, 
+    TextField,
+    MenuItem,
+    Typography
+} from "@material-ui/core";
+import MaterialPicker from '../../../../../../../shared/hoc/MaterialUIPickers';
+import { useDispatch, useSelector } from "react-redux";
+import {getStateList,getCountryList} from '../../../../../../../../store/action/utilAction';
+import strings from "../../../../../../../../i18n/Strings";
+import { ApiUtil } from "../../../../../../../../util/ApiUtil";
+import { Form } from "react-bootstrap";
+
+
+const Competition = (props) => {
+    const dispatch = useDispatch();
+    const [zipErrorMsg, setZipErrorMsg] = useState('');
+    const [stateData, setStateData] = useState([]);
+    const [countryData, setCountryData] = useState([]);
+    const {stateList,countryList} = useSelector(
+        state => state.utilData
+      );
+    useEffect(() => {
+    if (stateList.length > 0) {
+        setStateData(stateList);
+    } else {
+        dispatch(getStateList());
+    }
+
+    if (countryList.length > 0) {
+        setCountryData([countryList[0]]);
+      } else {
+        dispatch(getCountryList());
+      }
+    }, [stateList,countryList]);
+    const { handleDateChange, competitionFormDetail, handleDetailChange, applicationErrors, isApplicationDraft } = props;
+
+    // const checkZipcode = (zip,country,state) =>{
+    //     ApiUtil.getWithOutToken(
+    //         `${strings.apiRouter.hostManagement}/${strings.apiRouter.checkZipcode}/${zip}/${country}/${state}`
+    //       )
+    //         .then(() => {
+    //             setZipErrorMsg('');
+    //             handleApplicationTypeZipError(null, 'competition');
+    //         })
+    //         .catch(err => {
+    //             setZipErrorMsg(err.response.data.msg)
+    //             handleApplicationTypeZipError(err.response.data.msg, 'competition');
+    //         });
+    // }
+
+    return (
+        <Grid container className="mt-3">
+            <Grid item xs={1} />
+            <Grid item xs={10}>
+                <Grid container spacing={1}>
+                    <Grid item md={6} xs={12}>
+                        {isApplicationDraft && (
+                            <TextField
+                            label="Number of competitions"
+                            name="noOfCompetition"
+                            onChange={(e) => handleDetailChange(e)}
+                            value={competitionFormDetail?.noOfCompetition || ''}
+                            error={applicationErrors && !competitionFormDetail?.noOfCompetition}
+                            fullWidth
+                        />
+                        )}
+                        {!isApplicationDraft && (
+                            <>
+                            <FormLabel component="legend">Number of competitions</FormLabel>
+                            <Typography>{competitionFormDetail?.noOfCompetition || ''}</Typography>
+                            </>
+                        )}
+                    </Grid>
+                    <Grid item md={6} xs={12}>
+                        <TextField
+                        label="Outreach Comp ID"
+                        name="outreachCompetitionId"
+                        onChange={(e) => handleDetailChange(e)}
+                        value={competitionFormDetail?.outreachCompetitionId || ''}
+                        // error={applicationErrors && !competitionFormDetail?.outreachCompetitionId}
+                        fullWidth
+                        />
+                    </Grid>
+                    <Grid item md={6} xs={12}>
+                        <TextField
+                        label="USEF Competition ID#"
+                        name="usefCompetitionId"
+                        onChange={(e) => handleDetailChange(e)}
+                        value={competitionFormDetail?.usefCompetitionId || ''}
+                        // error={applicationErrors && !competitionFormDetail?.usefCompetitionId}
+                        fullWidth
+                        />
+                    </Grid>
+                    <Grid item md={6} xs={12}>
+                        <TextField
+                        label="Name of Competition"
+                        name="competitionName"
+                        onChange={(e) => handleDetailChange(e)}
+                        value={competitionFormDetail?.competitionName || ''}
+                        error={applicationErrors && !competitionFormDetail?.competitionName}
+                        fullWidth
+                        />
+                    </Grid>
+                    {/* <Grid item md={6} xs={12}>
+                        <MaterialPicker
+                        labelText="Start Date"
+                        handleDateChange={handleDateChange}
+                        name="startDate"
+                        dateValue={competitionFormDetail?.startDate || ''}
+                        // maxValue={competitionFormDetail?.endDate || ''}
+                        isError={applicationErrors && !competitionFormDetail?.startDate}
+                        fullWidth
+                        />
+                    </Grid>
+                    <Grid item md={6} xs={12}>
+                        <MaterialPicker
+                        labelText="End Date"
+                        handleDateChange={handleDateChange}
+                        name="endDate"
+                        dateValue={competitionFormDetail?.endDate || ''}
+                        minDate={competitionFormDetail?.startDate||''}
+                        isError={applicationErrors && !competitionFormDetail?.endDate}
+                        // maxValue={new Date()}
+                        fullWidth
+                        />
+                    </Grid> */}
+                    <Grid item md={12} xs={12}>
+                        <TextField
+                        label="Competition Dates"
+                        name="compDates"
+                        onChange={(e) => handleDetailChange(e)}
+                        value={competitionFormDetail?.compDates || ''}
+                        error={applicationErrors && !competitionFormDetail?.compDates}
+                        fullWidth
+                        />
+                    </Grid>
+                    <Grid item md={6} xs={12}>
+                        <TextField
+                        label="Name of Facility"
+                        name="facilityName"
+                        onChange={(e) => handleDetailChange(e)}
+                        value={competitionFormDetail?.facilityName || ''}
+                        error={applicationErrors && !competitionFormDetail?.facilityName}
+                        fullWidth
+                        />
+                    </Grid>
+                    <Grid item md={6} xs={12}>
+                        <TextField
+                        label="Facility Address"
+                        name="facilityAddress"
+                        onChange={(e) => handleDetailChange(e)}
+                        value={competitionFormDetail?.facilityAddress || ''}
+                        error={applicationErrors && !competitionFormDetail?.facilityAddress}
+                        fullWidth
+                        />
+                    </Grid>
+                    <Grid item md={6} xs={12}>
+                        <TextField
+                        label="Facility City"
+                        name="facilityCity"
+                        onChange={(e) => handleDetailChange(e)}
+                        value={competitionFormDetail?.facilityCity || ''}
+                        error={applicationErrors && !competitionFormDetail?.facilityCity}
+                        fullWidth
+                        />
+                    </Grid>
+                    <Grid item md={6} xs={12}>
+                        <TextField
+                        label="Facility Country"
+                        name="facilityCountry"
+                        select
+                        fullWidth
+                        onChange={(e) => handleDetailChange(e)}
+                        value={competitionFormDetail?.facilityCountry || ''}
+                        error={applicationErrors && !competitionFormDetail?.facilityCountry}
+                        >
+                        {countryData &&
+                        countryData.map(data => (
+                        <MenuItem key={data.id} value={data.name}>{data.name}</MenuItem>
+                        ))}
+                        </TextField>
+                    </Grid>
+                    <Grid item md={6} xs={12}>
+                        <TextField
+                        label="Facility State"
+                        name="facilityState"
+                        select
+                        fullWidth
+                        onChange={(e) => handleDetailChange(e)}
+                        value={competitionFormDetail?.facilityState || ''}
+                        error={applicationErrors && !competitionFormDetail?.facilityState}
+                        >
+                        {stateData &&
+                        stateData.map(data => (
+                        <MenuItem key={data.id} value={data.iso}>{data.name}</MenuItem>
+                        ))}
+                        </TextField>
+                    </Grid>
+                    <Grid item md={6} xs={12}>
+                        <TextField
+                        label="Facility Zip"
+                        name="facilityZip"
+                        onChange={(e) => handleDetailChange(e)}
+                        // onBlur={(e) => checkZipcode(competitionFormDetail.facilityZip,competitionFormDetail.facilityCountry,competitionFormDetail.facilityState)}
+                        value={competitionFormDetail?.facilityZip || ''}
+                        error={applicationErrors && !competitionFormDetail?.facilityZip}
+                        fullWidth
+                        />
+                        {applicationErrors?.facilityZip && (
+                            <Form.Text className="password-helper" id="passwordHelpBlock">
+                                {applicationErrors.facilityZip}
+                            </Form.Text>
+                        )}
+                    </Grid>
+                    <Grid item md={3} xs={4}>
+                            <FormLabel error={applicationErrors && (competitionFormDetail?.areStallsAvailable === undefined || competitionFormDetail.areStallsAvailable === null)} className="mt-3" component="legend">Are stalls available?</FormLabel>
+                    </Grid>
+                    <Grid item md={9} xs={4}>
+                        <RadioGroup className="mt-1" row aria-label="are_stalls_available" name="areStallsAvailable">
+                            <FormControlLabel
+                                control={(
+                                    <Radio
+                                        checked={competitionFormDetail?.areStallsAvailable !== undefined && competitionFormDetail.areStallsAvailable !== null && competitionFormDetail.areStallsAvailable.toString() === 'true' ? true : false}
+                                        onChange={(e) => handleDetailChange(e)}
+                                        value='true'
+                                    />
+                                )} 
+                                label="Yes"
+                            />
+                            <FormControlLabel
+                                control={(
+                                    <Radio
+                                        checked={competitionFormDetail?.areStallsAvailable !== undefined && competitionFormDetail.areStallsAvailable !== null && competitionFormDetail.areStallsAvailable.toString() === 'false' ? true : false}
+                                        onChange={(e) => handleDetailChange(e)}
+                                        value='false'
+                                    />
+                                )} 
+                                label="No"
+                            />
+                        </RadioGroup>
+                    </Grid>
+                    {competitionFormDetail?.areStallsAvailable !== undefined && competitionFormDetail.areStallsAvailable !== null && competitionFormDetail.areStallsAvailable.toString() === 'true' && (
+                        <>
+                    <Grid item md={6} xs={12}>
+                        <TextField
+                        label="No of stalls"
+                        name="noOfStalls"
+                        onChange={(e) => handleDetailChange(e)}
+                        value={competitionFormDetail?.noOfStalls || ''}
+                        error={applicationErrors && competitionFormDetail.areStallsAvailable.toString() === 'true' && !competitionFormDetail?.noOfStalls}
+                        fullWidth
+                        />
+                    </Grid>
+                    <Grid item md={6} xs={12}>
+                        <TextField
+                        label="Price of stall for competition"
+                        name="stallPrice"
+                        onChange={(e) => handleDetailChange(e)}
+                        value={competitionFormDetail?.stallPrice || ''}
+                        error={applicationErrors && competitionFormDetail.areStallsAvailable.toString() === 'true' && !competitionFormDetail?.stallPrice}
+                        fullWidth
+                        />
+                    </Grid>
+                    </>
+                    )}
+                </Grid>
+            </Grid>
+            <Grid item xs={1} />
+        </Grid>
+    );
+};
+
+export default Competition;

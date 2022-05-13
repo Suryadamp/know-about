@@ -1,0 +1,137 @@
+mongoDB
+
+step 1
+* install mongoDB with compass 
+
+step 2
+
+* install mongoDB shell
+
+
+*mongoDB compass
+
+* show dbs   
+   for showing database all
+
+* help 
+ know all the key words in mongosh
+
+insertOne
+ * single object
+
+
+insertMany
+  * many objecy added
+
+new collection added in terminal
+ *db.(new Collection name).insertOne(obj)
+exp: * db.author.insertOne({name:"surya"})
+
+
+find
+* find all data find()
+* db.books.find()
+
+filter
+* db.books.find({author:"name"})
+
+
+Those field only get 
+*{title:1,author}-sencond argument data only get
+ *db.books.find({},{title:1,author:1}
+
+
+findOne
+* its find a single document
+
+
+count
+* count the total doc
+*db.books.find().count()
+
+
+limit
+ * set the limit 
+*db.books.find().limit(3)
+
+
+Sort
+
+*ascending Order
+ * db.books.find().sort({title:1})
+
+*descending Order
+ * db.books.find().sort({title:-1})
+
+queries
+  *greater than 
+  * db.books.find({rating:{$gt:9}})
+ *greater than equal
+  * db.books.find({rating:{$gte:9}})
+
+ *less than
+  * db.books.find({rating:{$lt:8}})
+ *less than equal
+  * db.books.find({rating:{$lte:8}})
+
+
+or query
+ * db.books.find({$or:[{pages:{$lt:300}},{pages:{$gt:500}}]}]
+
+--------------------------------------------------
+$in
+
+* db.books.find({rating:{$in:[7,8,9]}}) 
+  * is equal to  db.books.find({$or:[{rating:7},{rating:8},{rating:9}]})
+
+
+$nin
+
+
+* db.books.find({rating:{$nin:[7,8,9]}}) 
+------------------------------------------------
+queries Array
+* using dot for array
+* db.story.find({"reviews.name":"sj"}) 
+
+-------------------------------------------
+deleteOne
+* db.story.deleteOne({_id:ObjectId("626916746d88a7d785e243c4")})
+
+deleteMany
+* db.story.deleteMany({"pages":300})
+
+----------------------------------------------------------
+Update Queries
+
+$set
+*updateOne
+ 
+* db.books.updateOne({_id:ObjectId("6268ec3a6d88a7d785e243c3")},{$set:{rating:20,pages:700}})
+
+*updateMany
+
+*db.books.updateMany({author:"Brandon Sanderson"},{$set:{author:"surya"}})
+
+$inc
+* increment
+*db.books.updateOne({_id:ObjectId("6268ec3a6d88a7d785e243c3")},{$inc:{pages:2}})
+
+*decrement
+*db.books.updateOne({_id:ObjectId("6268ec3a6d88a7d785e243c3")},{$inc:{pages:-2}})
+
+$push
+*db.books.updateOne({_id:ObjectId("6268ec3a6d88a7d785e243c3")},{$push:{genres:"fantasy"}})
+
+$pull
+*db.books.updateOne({_id:ObjectId("6268ec3a6d88a7d785e243c3")},{$pull:{genres:"fantasy"}})
+
+$each
+* db.books.updateOne({_id:ObjectId("6268ec3a6d88a7d785e243c3")},{$push:{genres:{$each:["1","2"]}}})
+
+-----------------------------------------------------
+
+
+
+
+ 

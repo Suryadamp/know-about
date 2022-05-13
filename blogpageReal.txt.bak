@@ -1,0 +1,82 @@
+---------------------Real.js-------------------------
+
+import React from 'react';
+import { makeStyles } from '@material-ui/core/styles';
+import Grid from '@material-ui/core/Grid';
+import Paper from '@material-ui/core/Paper';
+import Typography from '@material-ui/core/Typography';
+import ButtonBase from '@material-ui/core/ButtonBase';
+import Batman from "./Batman.jpg"
+
+const useStyles = makeStyles((theme) => ({
+  root: {
+    flexGrow: 1,
+  },
+  paper: {
+    padding: theme.spacing(1),
+    margin: '40px',
+    maxWidth: 400,
+    maxHeight: 400,
+  },
+  image: {
+    width: 128,
+    height: 128,
+  },
+  ref:{
+    flexGrow: 1,
+    display: "flex",
+    flexDirection:"row"
+  },
+  img: {
+    margin: 'auto',
+    display: 'block',
+    maxWidth: '100%',
+    maxHeight: '100%',
+  },
+}));
+
+const  Real =({blog}) => {
+  const classes = useStyles();
+
+  return (
+    <div className={classes.root}>
+     <Grid container  item xs >
+      {  blog.map((data) => {
+     return  <>
+     
+     <Paper className={classes.paper}>
+        
+
+              <Typography >
+                  {data?.id}
+                </Typography>
+            
+            <ButtonBase className={classes.image}>
+              <img className={classes.img} alt="complex" src= {Batman}/>
+            </ButtonBase>
+          
+            
+                <Typography >
+                {data?.title}
+                </Typography>
+                <Typography >
+                {data?.body}
+                </Typography>
+
+           
+        
+      
+      </Paper>
+      
+      </> 
+
+
+      })}
+      </Grid>
+    </div>
+  );
+}
+
+
+
+export default Real;

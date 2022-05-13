@@ -1,0 +1,29 @@
+  const handleCustomerDetails = (e) => {
+        const { name, value, checked } = e.target
+        if(name === 'same_address'){
+            setCustomerDetails((prevState) => ({
+                ...prevState,
+                [name]: checked,
+            }))
+            if(checked){
+                setCustomerDetails((prevState) => ({
+                    ...prevState,
+                    line2: customerDetails.line1,
+                    state1: customerDetails.state,
+                }))
+            }else {
+                setCustomerDetails((prevState) => ({
+                    ...prevState,
+                    line2: '',
+                    state1: '',
+                }))
+            }
+
+        }else{
+            setCustomerDetails((prevState) => ({
+                ...prevState,
+                [name]: value,
+            }))
+        }
+        
+    }

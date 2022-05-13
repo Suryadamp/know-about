@@ -1,0 +1,581 @@
+---------------------app.js-------------------
+import React, { useState } from "react";
+import logo from "./logo.svg";
+import "./App.css";
+import Blogspot from "./Blogspot";
+import Real from "./Real";
+import Pos from "./pos";
+import { Route, Routes } from "react-router-dom";
+
+export const Context = React.createContext();
+
+function App() {
+  const [data, setData]=useState([]);
+  console.log(data)
+
+  return (
+    <Context.Provider value={data}>
+      <div className="App">
+        <Routes>
+          <Route exact path="/" element={<Blogspot setData={setData} />} />
+          <Route path="/Real" element={<Real />} />
+          <Route path="/Pos/:id" element={<Pos />} />
+        </Routes>
+      </div>
+    </Context.Provider>
+  );
+}
+
+export default App;
+
+
+--------------------------Blogspot--------------------
+import React from "react";
+import { useEffect, useState, useContext } from "react";
+import axios from "axios";
+import Login from "./Login";
+import Real from "./Real";
+import Add from "./Add";
+import Pos from "./pos";
+
+import { AppBar, Button, Toolbar, Typography, Card } from "@material-ui/core";
+import { makeStyles } from "@material-ui/core";
+import { useParams } from "react-router";
+import { Context } from "./App";
+import Dialug from "./Dialug";
+
+const useStyles = makeStyles((theme) => ({
+  root: {
+    paddingBottom: theme.spacing(10),
+  },
+}));
+const Blogspot = (props) => {
+
+  const { data } = useContext(Context);
+  const{setData} = props;
+
+  const id = useParams();
+
+  const classes = useStyles();
+  const [blog, setBlog] = useState([]);
+  const [open, setOpen] = useState(false);
+  const [add, setAdd] = useState(false);
+  const [submit, setSubmit] = useState({});
+
+
+  const handleClickOpen = () => {
+    setOpen(true);
+  };
+
+  const handleClose = () => {
+    setOpen(false);
+  };
+
+  const handleAdd = () => {
+    setAdd(true);
+  };
+  const handleAddClose = () => {
+    setAdd(false);
+  };
+
+  useEffect(() => {
+    if (submit) {
+      setData([...blog, submit]);
+    }
+  }, [submit]);
+  console.log(submit)
+
+  useEffect(() => {
+    
+      axios
+        .get(`https://jsonplaceholder.typicode.com/posts/`)
+        .then((res) => setBlog([...res.data.slice(0, 10),submit]));
+    
+  }, [submit]);
+
+  return (
+    <div>
+      <AppBar position="static">
+        <Toolbar>
+          <Typography
+            variant="h2"
+            color="secondary"
+            style={{ marginLeft: "650px" }}
+          >
+            Home
+          </Typography>
+          <Button
+            variant="contianed"
+            style={{ marginLeft: "600px", backgroundColor: "red" }}
+            color="secondary"
+            onClick={handleClickOpen}
+          >
+            Login
+          </Button>
+        </Toolbar>
+      </AppBar>
+
+      <Button
+        variant="contained"
+        color="primary"
+        style={{ marginLeft: "1350px" }}
+        onClick={handleAdd}
+      >
+        Add
+      </Button>
+      <Login handleClose={handleClose} open={open} />
+      {blog && <Real blog={blog} />}
+
+      <Add handleAddClose={handleAddClose} add={add} submit={setSubmit} />
+      {/* <Dialug data={setData} /> */}
+    </div>
+  );
+};
+
+export default Blogspot;
+
+
+-------------------Dialug.js--------------------
+import { Dialog, DialogTitle, Grid, Link } from "@material-ui/core";
+import React, { useState, useContext,useEffect } from "react";
+import { useParams } from "react-router";
+import axios from "axios";
+import {
+  TextField,
+  Button,
+  DialogActions,
+  DialogContent,
+} from "@material-ui/core";
+import { Context } from "./App";
+
+const Dialug = (props) => {
+  
+  const id = useParams();
+  console.log(id?.id)
+
+  const [input, setInput] = useState();
+  console.log(input);
+   useEffect(() => {
+    axios
+      .get(`https://jsonplaceholder.typicode.com/posts/${id?.id} `)
+      .then((res) => setInput(res.data));
+  }, []);
+  console.log(input);
+
+
+
+
+  return (
+    <>
+      <Dialog open={props.read} close={props.handleDialugClose}>
+        <DialogContent>
+          <DialogTitle>Add Blog</DialogTitle>
+
+          <Grid container spacing={1}>
+            <Grid item xs={12} sm={6}>
+              <TextField label="Id" type="text" value={input?.id} fullWidth />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                label="Title"
+                type="text"
+                value={input?.title}
+                fullWidth
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                name="body"
+                label="Body"
+                type="text"
+                value={input?.body}
+                fullWidth
+              />
+            </Grid>
+          </Grid>
+        </DialogContent>
+        <DialogActions>
+          <Button type="submit" variant="contained" color="secondary">
+            Submit
+          </Button>
+
+          <Button
+            onClick={props.handleDialugClose}
+            variant="contained"
+            color="secondary"
+          >
+            Close
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </>
+  );
+};
+
+export default Dialug;
+
+
+---------------------- Add.js----------------------
+
+import { Dialog, DialogTitle, Grid, Link } from "@material-ui/core";
+import React, { useState } from "react";
+import {
+  TextField,
+  Button,
+  DialogActions,
+  DialogContent,
+} from "@material-ui/core";
+
+
+
+const Add = (props) => {
+  const [input, setInput] = useState({ id: "", title: "", body: "" });
+  
+
+  const handleInputChange = (e) => {
+    const {name, value} = e.target;
+    
+    setInput((prevState) => ({
+      ...prevState,
+      [name]: value,
+    }));
+  };
+
+const handleSubmit =() =>{
+  
+    fetch('https://jsonplaceholder.typicode.com/posts', {
+        method: 'POST',
+        body: JSON.stringify(
+          
+        input),
+        headers: {
+          'Content-type': 'application/json; charset=UTF-8',
+        },
+      })
+        .then((response) => response.json())
+        .then((json) => props.submit(json));
+        
+
+
+
+}
+
+
+  
+
+  return (
+    <>
+      <Dialog open={props.add} close={props.handleAddClose}>
+        <DialogContent>
+          <DialogTitle>Add Blog</DialogTitle>
+        
+          <Grid container spacing={1}>
+            <Grid item xs={12} sm={6}>
+
+            
+              <TextField
+                name="id"
+                label="Id"
+                type="text"
+                value={input?.id}
+                onChange={handleInputChange}
+                fullWidth
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                name="title"
+                label="Title"
+                type="text"
+                value={input?.title}
+                onChange={handleInputChange}
+                fullWidth
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                name="body"
+                label="Body"
+                type="text"
+                value={input?.body}
+                onChange={handleInputChange}
+                fullWidth
+              />
+            </Grid>
+          </Grid>
+        </DialogContent>
+        <DialogActions>
+      
+          <Button  type="submit" variant="contained" color="secondary" 
+          onClick={handleSubmit}
+        
+          
+          >
+            Submit
+          </Button>
+
+          <Button
+            onClick={props.handleAddClose}
+            variant="contained"
+            color="secondary"
+          >
+            Close
+          </Button>
+          
+        </DialogActions>
+      </Dialog>
+    </>
+  );
+};
+
+export default Add;
+
+
+--------------------------------- Real.js------------------
+import {React ,useState} from "react";
+import { makeStyles } from "@material-ui/core/styles";
+import { Chip, CardContent, Grid, Box } from "@material-ui/core";
+import Paper from "@material-ui/core/Paper";
+import Typography from "@material-ui/core/Typography";
+import Batman from "./Batman.jpg";
+import IconButton from "@material-ui/core/IconButton";
+import FavoriteIcon from "@material-ui/icons/Favorite";
+import { Link } from "react-router-dom";
+import { useNavigate  } from 'react-router-dom'
+import Dialug from "./Dialug";
+
+
+
+const useStyles = makeStyles((theme) => ({
+  root: {
+    flexGrow: 1,
+  },
+  paper: {
+    padding: theme.spacing(1),
+    margin: "40px",
+    maxWidth: 400,
+    maxHeight: 400,
+  },
+
+  img: {
+    margin: "auto",
+    maxWidth: "50%",
+    maxHeight: "40%",
+  },
+}));
+
+const Real = ({ blog }) => {
+  const classes = useStyles();
+const navigate=useNavigate();
+const [read, setRead] = useState(false);
+
+const handleDialug = () => {
+  setRead(true);
+};
+const handleDialugClose = () => {
+  setRead(false);
+};
+
+
+
+console.log(blog)
+
+  return (
+    <div className={classes.root}>
+      <Grid container item xs>
+        {blog.map((data) => {
+          
+          {
+            return (
+              <>
+                <Paper className={classes.paper}>
+                  <Typography>{data?.id}</Typography>
+
+                  <img className={classes.img} src={Batman} />
+
+                  <Typography>{data?.title}</Typography>
+                  <Typography>{data?.body}</Typography>
+
+                  <Box>
+                    <IconButton color="secondary">
+                      <FavoriteIcon />
+                    </IconButton>
+          
+                      <Chip
+                         label="Read More"
+                        style={{
+                          marginLeft: "250px",
+                          backgroundColor: "blueviolet",
+                        }}
+                        onClick={()  =>{
+                          navigate(`/Dialug/${data.id}`);
+                      }}
+                   onClick={handleDialug}
+                        variant="outlined"
+                        color="secondary"
+                        clickable
+                      />
+                      
+                         <Dialug  handleDialugClose={handleDialugClose}   read={read} />
+                  
+                  </Box>
+                </Paper>
+              </>
+            );
+          }
+        })}
+      </Grid>
+     
+    </div>
+   
+  );
+};
+
+export default Real;
+
+-------------------------------pos.js----------------------------
+import React, { useState, useEffect,useContext } from "react";
+import { useParams } from "react-router";
+import axios from "axios";
+import Batman from "./Batman.jpg";
+import { Paper, Typography, Grid, Card, Button } from "@material-ui/core";
+import { Context } from "./App";
+
+const Pos = () => {
+  const {data}=useContext(Context);
+  const name =[];
+  const id = useParams();
+  console.log(data)
+
+  const [bag, setBag] = useState();
+  
+
+  // useEffect(() => {
+  //   axios
+  //     .get(`https://jsonplaceholder.typicode.com/posts/${id?.id} `)
+  //     .then((res) => setBag(res.data));
+  // }, []);
+  // console.log(bag);
+
+  return (
+    <div>
+      {name?.id === 101 ? (
+        <Paper spacing={2}>
+          <Grid item sm={10} xs={12} contianer>
+            <Card style={{ marginLeft: "200px", CellSpacing: "5" }}>
+              <Typography variant="h4">{name?.id}</Typography>
+              <Typography variant="h4">{name?.title}</Typography>
+              <img height="300" width="200" src={Batman} />
+              <Typography variant="h4">{name?.body}</Typography>
+
+              <Button color="secondary" variant="contained">
+                Edit
+              </Button>
+              <Button color="secondary" variant="contained">
+                Delete
+              </Button>
+            </Card>
+          </Grid>
+        </Paper>
+      ) : (
+        <Paper spacing={2}>
+          <Grid item sm={10} xs={12} contianer>
+            <Card style={{ marginLeft: "200px", CellSpacing: "5" }}>
+              <Typography variant="h4">{bag?.id}</Typography>
+              <Typography variant="h4">{bag?.title}</Typography>
+              <img height="300" width="200" src={Batman} />
+              <Typography variant="h4">{bag?.body}</Typography>
+
+              <Button color="secondary" variant="contained">
+                Edit
+              </Button>
+              <Button color="secondary" variant="contained">
+                Delete
+              </Button>
+            </Card>
+          </Grid>
+        </Paper>
+      )}
+    </div>
+  );
+};
+
+export default Pos;
+
+
+------------------------------Login.js-----------------------
+
+import React from "react";
+import { Button, Card, Grid } from "@material-ui/core";
+import TextField from '@material-ui/core/TextField';
+import Dialog from '@material-ui/core/Dialog';
+import { DialogTitle,DialogActions } from "@material-ui/core";
+
+const Login = (props) => {
+
+  
+    return (
+
+<div>
+    <Dialog     open={props.open} onClose={props.handleC}>
+
+    <DialogTitle id="form-dialog-title">User login</DialogTitle>
+    <Grid container>
+   <Grid item sm={5}xs={12} style={{ marginLeft: "40px" }}>
+    <TextField
+            autoFocus
+            
+            id="name"
+            label="Name"
+            type="email"
+    fullWidth
+          />
+          </Grid>
+          <Grid item sm={5}xs={12} style={{ marginLeft: "20px" }}>
+           <TextField
+            autoFocus
+             
+            id="Username"
+            label="Username"
+            type="text"
+            fullWidth
+          />
+          </Grid>
+          <Grid item sm={5}xs={12} style={{ marginLeft: "40px" }}>
+           <TextField
+            autoFocus
+            
+            id="emailid"
+            label="Email Id"
+            type="email"
+            fullWidth
+          />
+</Grid>
+
+<Grid item sm={5}xs={12} style={{ marginLeft: "20px" }} >
+
+<TextField
+            autoFocus
+        
+            id="password"
+            label="Password"
+            type="password"
+            fullWidth
+          />
+          </Grid>
+          </Grid>
+                  <DialogActions>
+
+          <Button color="secondary" variant="outlined" >Login</Button>
+        
+          <Button   color="secondary" variant="outlined"     onClick={props.handleClose} >LogOut</Button>
+</DialogActions>
+    </Dialog>
+    
+    
+</div>
+
+      );
+}
+ 
+export default Login;

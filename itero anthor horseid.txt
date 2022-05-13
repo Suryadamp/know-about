@@ -1,0 +1,1062 @@
+----------------------ProfileCard.js-------------------------
+import React, { useState, useEffect, useRef } from 'react';
+import {
+  Grid, Paper, Typography, Avatar, Button, CircularProgress,
+} from '@material-ui/core';
+import { FaHorseHead } from 'react-icons/fa';
+import { makeStyles } from '@material-ui/core/styles';
+import { useDispatch } from 'react-redux';
+import Badge1 from '../../../assests/badge1.svg';
+import Badge2 from '../../../assests/badge2.svg';
+import Badge3 from '../../../assests/badge3.svg';
+import PurposeDialog from './PurposeDialog';
+import { memberAppUrl } from '../../../common/config';
+import ApiUtil from '../../../util/ApiUtil';
+import ProfileImageCropper from '../../../components/ProfileImageCropper';
+import AddHorse from '../../member/Memberview/HorseGrid/AddDialog';
+import UseAnotherIdDialog from '../UseAnotherIdDialog';
+import {
+  showFailureSnackbar,
+  showSuccessSnackbar,
+} from '../../../store/action/snackbarAction';
+
+const useStyles = makeStyles((theme) => ({
+  root: {
+    height: 200,
+  },
+  paper: {
+    height: 175,
+    borderRadius: 25,
+    // position: 'relative',
+  },
+  iconStyle: {
+    width: 50,
+    height: 50,
+    paddingLeft: 10,
+    paddingTop: 10,
+  },
+  bottomIconStyle: {
+    height: 40,
+    paddingLeft: 10,
+    paddingRight: 10,
+    position: 'absolute',
+    bottom: 5,
+    right: 0,
+  },
+  textStyle: { color: 'white', paddingLeft: 10, fontWeight: 'bold' },
+  changeText: {
+    top: '-65px',
+    zIndex: 99999,
+    fontWeight: 600,
+    position: 'relative',
+    marginLeft: '10px',
+    color: '#fff',
+    width: '80%',
+    background: '#1902022e',
+    padding: '4px',
+    textAlign: 'center',
+    borderRadius: '10%',
+    opacity: 0,
+    '&:hover': {
+      opacity: 1,
+      cursor: 'pointer',
+    },
+  },
+  applicationButton: {
+    width: '130px',
+    margin: '5px 10px',
+    background: '#ec5269',
+    color: '#fff',
+    textTransform: 'none',
+    '&:hover': {
+      backgroundColor: '#ec5269',
+    },
+  },
+}));
+
+export default function ProfileCard({ currHorseData, userDetails, ...props }) {
+  const classes = useStyles();
+  const [check, setCheck] = useState();
+  const [individualData, setIndividualData] = useState();
+  const [openReasonDialog, setOpenReasonDialog] = useState(false);
+  const credentials = JSON.parse(localStorage.getItem('credentials'));
+
+  const profilePicFileInput = useRef();
+  const [upImg, setUpImg] = useState();
+  const [openProfCropper, setOpenProfCropper] = useState(false);
+  const [cropperType, setCropperType] = useState();
+  const [profilePic, setProfilePic] = useState(null);
+  const dispatch = useDispatch();
+  const [printLoader, setPrintLoader] = useState(false);
+  const [emailLoader, setEmailLoader] = useState(false);
+  const [openEditHorse, setOpenEditHorse] = useState(false);
+
+
+  useEffect(() => {
+    setCheck(props.currUserData);
+    if (userDetails) {
+      setIndividualData({
+        individualId: userDetails.individualId,
+        email1: userDetails.email1,
+        firstName: userDetails.firstName,
+        lastName: userDetails.lastName,
+      });
+    }
+    if (currHorseData?.profileImage) {
+      setProfilePic(currHorseData.profileImage);
+    } else {
+      setProfilePic(null);
+    }
+  }, [userDetails, currHorseData]);
+
+  const jsonToURI = (jsonObj) => {
+    let output = '';
+    const keys = Object.keys(jsonObj);
+    keys.forEach((key) => {
+      output += `${key}=${jsonObj[key]}&`;
+    });
+    return output.slice(0, -1);
+  };
+  const getFullName = () => {
+    let fullName = '';
+    fullName = userDetails?.firstName ? userDetails.firstName : fullName;
+    fullName = userDetails?.lastName
+      ? `${fullName} ${userDetails.lastName}`
+      : fullName;
+    return fullName;
+  };
+
+  // const handleCloseDialog = () => {
+  //   setOpenReasonDialog(false);
+  // };
+
+  // ///ExamAnotherHorse
+  // const handleClickOpen = (props) => {
+  //   setOpens(true);
+  // };
+
+  const hadleSavePurpose = (value) => {
+    ApiUtil.postWithToken(`member/purpose/${userDetails.individualId}`, {
+      purpose: value,
+    }).then(() => {
+      setOpenReasonDialog(false);
+      window.open(
+        `${memberAppUrl}/redirection?credentials=${JSON.stringify(
+          credentials,
+        )}&member=${JSON.stringify(individualData)}`,
+        '_blank',
+      );
+    });
+  };
+  const imageUpload = (event, profileType) => {
+    if (
+      event
+      && event.target
+      && event.target.files
+      && event.target.files.length > 0
+    ) {
+      // if (profileType === 'cover') {
+      //   setCropperTitle('cover');
+      // } else if (profileType === 'profile') {
+      //   setCropperTitle('Profile Picture');
+      // }
+      setCropperType(profileType);
+      const reader = new FileReader();
+      reader.addEventListener('load', () => setUpImg(reader.result));
+      reader.readAsDataURL(event.target.files[0]);
+      setOpenProfCropper(true);
+    }
+  };
+  const onInputClick = (event) => {
+    event.target.value = '';
+  };
+  const uploadImage = (base64) => {
+    setOpenProfCropper(false);
+
+    ApiUtil.putWithToken('horse/profilePic', {
+      profileImage: base64,
+      horseId: currHorseData.individualHorseId,
+    })
+      .then((data) => {
+        setProfilePic(base64);
+        dispatch(showSuccessSnackbar('Uploaded successfully'));
+        // dispatch(
+        //   authActionCreator.getUserDeatils(
+        //     ApiRouter.ADMIN_USER,
+        //   ),
+        // );
+        console.log(data);
+      })
+      .catch((e) => {
+        dispatch(showFailureSnackbar('Something went wrong'));
+      });
+  };
+  const handleCropProfileImage = (blob) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(blob);
+    reader.onloadend = function () {
+      const base64data = reader.result;
+      uploadImage(base64data);
+    };
+  };
+
+  const handleCloseCropper = () => {
+    setOpenProfCropper(false);
+  };
+
+  const onDownloadClick = (type) => {
+    const apiRoute = 'horseCard';
+    const downloadFileName = 'horseCard.pdf';
+    const endPoint = 'download';
+    if (type === 'pdf' || type === 'print') {
+      ApiUtil.downloadWithToken(
+        `${endPoint}/${apiRoute}?&type=pdf&horseId=${currHorseData.individualHorseId}&entityType=${userDetails.entityType}`,
+      )
+        .then((blob) => {
+          if (type === 'print') {
+            const file = new Blob([blob], { type: 'application/pdf' });
+            const fileURL = URL.createObjectURL(file);
+            window.open(fileURL);
+          } else if (type === 'pdf') {
+            // Create blob link to download
+            const url = window.URL.createObjectURL(new Blob([blob]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', downloadFileName);
+
+            // Append to html link element page
+            document.body.appendChild(link);
+
+            // Start download
+            link.click();
+
+            // Clean up and remove the link
+            link.parentNode.removeChild(link);
+          }
+          setPrintLoader(false);
+        })
+        .catch((err) => {
+          setPrintLoader(false);
+          console.log(err);
+        });
+    }
+  };
+  const emailMycard = () => {
+    const membershipId = props?.userDetails?.members.length > 0 ? props?.userDetails?.members[0].membershipId : '';
+    const url = `download/emailHorseCard?username=${membershipId}&userEmail=${userDetails.email1}&horseId=${currHorseData.individualHorseId}&entityType=${userDetails.entityType}`;
+    ApiUtil.getWithToken(url)
+      .then(() => {
+        setEmailLoader(false);
+        const message = 'Your card has been sent to registered email';
+        dispatch(showSuccessSnackbar(message));
+        setEmailLoader(false);
+      })
+      .catch(() => setEmailLoader(false));
+  };
+  const closeAddHorse = () => {
+    setOpenEditHorse(false);
+  };
+
+  return (
+    <>
+    <Grid className={classes.paper}>
+      {openEditHorse && (
+      <AddHorse
+        open={openEditHorse}
+        handleCloseDialog={closeAddHorse}
+        // email={email}
+      />
+      )}
+      <Grid container spacing={3}>
+        <Grid item xs={12}>
+          <Grid
+            container
+            direction="column"
+            justify="center"
+            alignItems="center"
+          >
+            <Grid item xs={12}>
+              <Typography
+                noWrap
+                varient="h6"
+                style={{
+                  color: '#001325',
+                  fontSize: 20,
+                  color: '#ec5269',
+                  paddingLeft: '10px',
+                }}
+              >
+                {currHorseData?.horseName}
+                {/* </a> */}
+              </Typography>
+            </Grid>
+
+            <Grid item xs={12}>
+              {profilePic ? (
+                <Avatar style={{ width: 100, height: 100 }} src={profilePic} />
+              ) : (
+                <Avatar style={{ width: 100, height: 100 }}>
+                  {currHorseData?.horseName ? currHorseData?.horseName[0] : '-'}
+                </Avatar>
+              )}
+              <input
+                style={{ display: 'none' }}
+                type="file"
+                onChange={(e) => imageUpload(e, 'profile')}
+                ref={profilePicFileInput}
+                onClick={onInputClick}
+                accept="image/*"
+              />
+              <div
+                onClick={() => {
+                  profilePicFileInput.current.click();
+                }}
+                className={classes.changeText}
+              >
+                change
+              </div>
+              {openProfCropper && (
+                <ProfileImageCropper
+                  open={openProfCropper}
+                  upImg={upImg}
+                  handleCropProfileImage={handleCropProfileImage}
+                  handleCloseCropper={handleCloseCropper}
+                  type="profile"
+                />
+              )}
+            </Grid>
+            <Grid item xs={12}>
+              <Typography
+                varient="p"
+                style={{ color: '#687F95', fontSize: 13 }}
+              >
+                HORSE ID
+              </Typography>
+            </Grid>
+            <Grid item xs={12}>
+              <Typography
+                varient="p"
+                style={{ color: '#001325', fontSize: 13 }}
+              >
+                {currHorseData?.horseUshjaId
+                  ? currHorseData?.horseUshjaId
+                  : '-'}
+              </Typography>
+            </Grid>
+            {/* <Grid item xs={12}>
+              <Grid container spacing={3}>
+                <Grid item xs={4}>
+                  <img src={Badge1} />
+                </Grid>
+                <Grid item xs={4}>
+                  <img src={Badge2} />
+                </Grid>
+                <Grid item xs={4}>
+                  <img src={Badge3} />
+                </Grid>
+              </Grid>
+            </Grid> */}
+            <Grid
+              container
+              justify="center"
+              alignItems="center"
+              spacing={3}
+              style={{ marginLeft: '3px' }}
+            >
+              {currHorseData?.horseUshjaId && (
+                <>
+                  <Grid item xs={2} />
+                  <Grid
+                    item
+                    xs={4}
+
+                  >
+                    <Button
+                      style={{ width: '100px', margin: '5px 10px' }}
+                      className="save"
+                      onClick={() => {
+                        setEmailLoader(true);
+                        emailMycard();
+                      }}
+                    >
+                      Email Card
+                      {emailLoader
+                      && <CircularProgress color="white" size="1rem" />}
+                    </Button>
+                  </Grid>
+                  <Grid item xs={4}>
+                    <Button
+                      style={{ width: '100px', margin: '5px 10px' }}
+                      className="save"
+                      onClick={() => {
+                        setPrintLoader(true);
+                        onDownloadClick('print');
+                      }}
+                    >
+                      Print Card
+                      {printLoader
+                      && <CircularProgress color="white" size="1rem" />}
+                    </Button>
+                  </Grid>
+                  <Grid item xs={2} />
+                </>
+              )}
+
+            </Grid>
+          </Grid>
+        </Grid>
+        {/* <Grid item xs={6}></Grid> */}
+      </Grid>
+      {openReasonDialog && (
+        <PurposeDialog
+          open={openReasonDialog}
+          // handleCloseDialog={handleCloseDialog}
+          hadleSavePurpose={hadleSavePurpose}
+        />
+      )}
+      {
+        (<UseAnotherIdDialog/>)
+      }
+      <Grid container spacing={3}>
+        {currHorseData?.horseStatus === 'Pending' && (
+        <>
+          <Grid item xs={12}>
+            <Grid
+              container
+              justify="center"
+              alignItems="center"
+              direction="column"
+              spacing={2}
+              style={{ marginLeft: '190px', marginTop: '-255px' }}
+            >
+              <Grid item xs={4}>
+                <Button
+                  className={classes.applicationButton}
+                  onClick={() => { setOpenEditHorse(true); }}
+                >
+                  Keep This ID
+                </Button>
+              </Grid>
+              <Grid item xs={4}>
+                <Button
+                  className={classes.applicationButton}
+                  onClick={() => {props.handleClickOpen()}}
+                >
+                  User Another ID
+                </Button>
+              </Grid>
+              <Grid item xs={4}>
+                <Button
+                  className={classes.applicationButton}
+
+                >
+                  Pend Application
+                </Button>
+              </Grid>
+              <Grid item xs={4}>
+                <Button
+                  className={classes.applicationButton}
+                >
+                  Close
+                </Button>
+              </Grid>
+            </Grid>
+          </Grid>
+        </>
+        )}
+      </Grid>
+    </Grid>
+    </>  
+  );
+}
+
+
+------------------ProfileViev .js----------------------------
+import {
+  Fab,
+  Grid,
+  makeStyles,
+  Paper,
+  Popover,
+  Typography,
+  Button, Accordion, AccordionSummary, AccordionDetails,
+} from '@material-ui/core';
+import React, {
+  useEffect, useRef, useState,
+} from 'react';
+import _ from 'lodash';
+import NoteAddIcon from '@material-ui/icons/NoteAdd';
+import { useSelector } from 'react-redux';
+import { useLocation, useParams } from 'react-router';
+import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
+import ProfileCard from '../profileCard';
+import StatusCard from '../statusCard';
+import ContactInfo from '../ContactInfo';
+import NoteDialog from '../NoteDialog';
+import SideScrollMenu from '../SideScrollMenu';
+import HorseInfo from '../HorseInfo';
+import HorseNote from '../HorseNote';
+import HorseDocument from '../HorseDocument';
+import ApiUtil from '../../../util/ApiUtil';
+import ProgramRow from '../ProgramRow';
+import OwnerHistory from '../OwnerHistory';
+import AliasesHorseHistory from '../AliasesHorseHistory';
+import ChampionshipStatus from '../ChampionshipStatus';
+import RegistrationHistoryHorse from '../RegistrationHistoryHorse';
+
+import TransferHorseDialog from '../TransferHorseDialog';
+import FormDialog from '../EXamAnotherHorse';
+const useStyles = makeStyles((theme) => ({
+  root: {
+    padding: theme.spacing(1),
+    marginTop: 10,
+  },
+}));
+export default function HorseProfileView(props) {
+  const classes = useStyles();
+  const [userData, setUserData] = useState();
+  const [enrolledProgram, setEnrolledProgram] = useState();
+
+  const [previousOwner, setPreviousOwner] = useState(null);
+
+  const [currUserData, setCurrUserData] = useState();
+  const [openTranserHorse, setOpenTranserHorse] = useState(false);
+
+  const [currHorseData, setCurrHorseData] = useState();
+  const [navHorseId, setNavHorseId] = useState(null);
+  const { horseId } = useParams();
+
+  const location = useLocation();
+
+  const { HorseListData, horseList, myHorses } = useSelector(
+    (state) => state.horse,
+  );
+  const [noteToUpdate, setNoteToUpdate] = useState({});
+  const [notesType, setNotesType] = useState('add');
+  const [openNote, setOpenNote] = useState(false);
+  const [notes, setNotes] = useState([]);
+  const [userProgram, setUserProgram] = useState([]);
+  const [openSideMenu, setOpenSideMenu] = useState(false);
+  const [lastRow, setLastRow] = useState(0);
+  const staticRef = useRef();
+  const contactRef = useRef();
+  const horseRef = useRef();
+  const memberRef = useRef();
+  const noteRef = useRef();
+  const docRef = useRef();
+  const noteButtonRef = useRef();
+  const championshipStatusRef = useRef();
+  const registrationHistoryRef = useRef();
+
+  const [ownersHistory, setOwnersHistory] = useState([]);
+  const [aliasesHorseHistory, setAliasesHorseHistory] = useState([]);
+  const [refreshAlias, setRefreshAlias] = useState(false);
+
+  const secondaryAddressRef = useRef();
+  const[opens,setOpens]=React.useState(false);
+
+  const handleClickOpen=()=>{
+    setOpens(true);
+  }
+
+  const getOwnerHistory = () => {
+    ApiUtil.getWithToken(`horse/ownerHistory/${horseId}`).then((resp) => {
+      if (resp.data) {
+        setOwnersHistory(resp?.data || []);
+      }
+    });
+  };
+
+  const getAliasesHorseHistory = () => {
+    ApiUtil.getWithToken(`horse/horse_aliases_history/${horseId}`).then((resp) => {
+      if (resp?.data) {
+        setAliasesHorseHistory(resp?.data || []);
+      }
+    });
+  };
+
+  const getIndividualHorseData = (horseId) => {
+    horseId
+      && ApiUtil.getWithToken(`horse/current/${horseId}`).then((val) => {
+        if (val?.status === 200) {
+          setCurrHorseData(val.data.horse);
+
+          setUserData(_.orderBy(val.data?.individualOwners, ['individual_horse_owner.startDate'], ['asc']));
+          setEnrolledProgram(
+            val.data?.enrolledProgram ? val.data?.enrolledProgram : [],
+          );
+          setLastRow(val.data?.individualOwners.length);
+        }
+      });
+
+    getOwnerHistory();
+    getAliasesHorseHistory();
+  };
+
+  const updateApproval = () => {
+    ApiUtil.putWithToken(`horse/${horseId}/approve`).then(() => {
+      getIndividualHorseData(horseId);
+    });
+  };
+
+  useEffect(() => {
+    // eslint-disable-next-line no-unused-expressions
+    getIndividualHorseData(horseId);
+  }, [horseId]);
+  useEffect(() => {
+    if (horseId) {
+      getNotes(horseId);
+    }
+  }, [horseId]);
+  const getNotes = (horseId) => {
+    ApiUtil.getWithToken(`horse/notes/${horseId}`).then((res) => {
+      setNotes(res.data);
+    });
+  };
+  const updateNotes = (note) => {
+    setNoteToUpdate(note);
+    setNotesType('update');
+    setOpenNote(noteButtonRef.current);
+  };
+  const handleOpenNotes = (event) => {
+    setNotesType('add');
+    setOpenNote(event.currentTarget);
+    setOpenSideMenu(null);
+  };
+  const handleCloseNotes = () => {
+    setNotesType('add');
+    setOpenNote(null);
+  };
+  const handleSideMenuClose = () => {
+    setOpenSideMenu(null);
+  };
+
+  const handleSideMenuOpen = (event) => {
+    setOpenSideMenu(event.currentTarget);
+    setOpenNote(null);
+  };
+
+  const handleScrollComp = (name) => {
+    switch (name) {
+      case 'Static':
+        if (staticRef !== null) {
+          staticRef.current.scrollIntoView({ behavior: 'smooth' });
+        }
+        break;
+      case 'Contact':
+        if (contactRef !== null) {
+          contactRef.current.scrollIntoView({ behavior: 'smooth' });
+        }
+        break;
+      case 'Secondary Address':
+        if (secondaryAddressRef !== null) {
+          secondaryAddressRef.current.scrollIntoView({ behavior: 'smooth' });
+        }
+        break;
+      case 'Horse':
+        if (horseRef !== null) {
+          horseRef.current.scrollIntoView({ behavior: 'smooth' });
+        }
+        break;
+      case 'Program':
+        if (memberRef !== null) {
+          memberRef.current.scrollIntoView({ behavior: 'smooth' });
+        }
+        break;
+      case 'Documents':
+        if (docRef !== null) {
+          docRef.current.scrollIntoView({
+            behavior: 'smooth',
+          });
+        }
+        break;
+      case 'Note':
+        if (noteRef !== null) {
+          noteRef.current.scrollIntoView({
+            top: 0,
+            left: 0,
+            behavior: 'smooth',
+          });
+        }
+        break;
+      case 'Championship Status':
+        if (championshipStatusRef !== null) {
+          championshipStatusRef.current.scrollIntoView({
+            behavior: 'smooth',
+          });
+        }
+        break;
+      case 'Registration History':
+        if (registrationHistoryRef !== null) {
+          registrationHistoryRef.current.scrollIntoView({ behavior: 'smooth' });
+        }
+        break;
+
+      default:
+        break;
+    }
+  };
+
+  useEffect(() => {
+    if (refreshAlias) {
+      getAliasesHorseHistory();
+    }
+    setRefreshAlias(false);
+  }, [refreshAlias]);
+
+  useEffect(() => {
+    getOwnerHistory();
+  }, []);
+
+  return (
+    <Grid container className={classes.root} spacing={3}>
+      {/* ref={staticRef} */}
+      <Grid item xs={12} ref={staticRef}>
+        <StaticView
+          {...props}
+          handleClickOpen={handleClickOpen}
+          currHorseData={currHorseData}
+          userDetails={userData}
+          memberDetails={
+            userData
+            && Array.isArray(userData.members)
+            && userData.members.length > 0
+              ? userData.members[0]
+              : ''
+          }
+          //   fetchMember={fetchMemberData}
+          //   organizationId={navOrganizationId}
+        />
+      </Grid>
+      <Grid item xs={12} ref={contactRef}>
+        <HorseInfo
+          currHorseData={currHorseData}
+          updateApproval={updateApproval}
+          getIndividualHorseData={getIndividualHorseData}
+        />
+      </Grid>
+      {userData && (
+        <Grid item xs={12} ref={contactRef}>
+          <Paper style={{ height: 'auto', marginTop: '10px' }}>
+            {/* style={{ height: mode === 'view' ? 180 : 320 }} */}
+            <Grid container spacing={3}>
+              <Grid item xs={6}>
+                <Typography className="info-view-header">
+                  Owner Information
+                </Typography>
+              </Grid>
+              <Grid item xs={6}>
+                {
+                  userData.filter((uDate) => uDate.individual_horse_owner?.relation === 'parent')?.length === 1 && (
+                  <Button
+                    className="save"
+                    onClick={() => {
+                      setOpenTranserHorse(true);
+                    }}
+                  >
+                    Transfer Horse
+                  </Button>
+                  )
+                }
+              </Grid>
+              <Grid item xs={12}>
+                {userData.map((prop, index) => (
+                  <ContactInfo
+                    {...prop}
+                    currHorseData={currHorseData}
+                    title="Owner Information"
+                    lastRow={lastRow - 1 == index}
+                  />
+                ))}
+              </Grid>
+            </Grid>
+          </Paper>
+        </Grid>
+      )}
+      {previousOwner != null && (
+        <Grid item xs={12} ref={contactRef}>
+          <ContactInfo
+            {...previousOwner}
+            currHorseData={previousOwner}
+            title="Previous Owner Information"
+          />
+        </Grid>
+      )}
+      <Grid item xs={12} ref={championshipStatusRef}>
+        <ChampionshipStatus
+          view="Accordion"
+          currHorseData={currHorseData}
+          ownerDetails={
+            currHorseData
+            && Array.isArray(currHorseData.individual_horse_owners)
+            && currHorseData.individual_horse_owners.length > 0
+              ? currHorseData.individual_horse_owners[0]
+              : ''
+          }
+        />
+      </Grid>
+      {enrolledProgram && (
+      <Grid item xs={12} ref={contactRef}>
+        <Accordion>
+          <AccordionSummary
+            expandIcon={<ExpandMoreIcon style={{ color: '#ec5269' }} />}
+            aria-controls="panel1a-content"
+            id="panel1a-header"
+          >
+            <Typography className="info-view-header">
+              Program Information
+            </Typography>
+          </AccordionSummary>
+          <AccordionDetails>
+            <Paper>
+              <Grid container spacing={3}>
+                {/* <Grid item xs={6}>
+              <Typography className="info-view-header">
+                Program Information
+              </Typography>
+            </Grid> */}
+                <Grid item xs={12}>
+                  {enrolledProgram.map((prop, index) => (
+                    <ProgramRow
+                      {...prop}
+                      title="Program Information"
+                      lastRow={lastRow - 1 == index}
+                      getIndividualHorseData={getIndividualHorseData}
+                      horseId={horseId}
+                      from="horse"
+                    />
+                  ))}
+                </Grid>
+              </Grid>
+            </Paper>
+          </AccordionDetails>
+        </Accordion>
+      </Grid>
+      )}
+      <Grid item xs={12} ref={docRef}>
+        <HorseDocument
+          type="general"
+          {...userData}
+          individualHorseId={horseId}
+          // userProgram={userProgram}
+        />
+      </Grid>
+      <Grid item xs={12} ref={noteRef}>
+        <HorseNote notes={notes} updateNotes={updateNotes} />
+      </Grid>
+
+      <Grid item xs={12} ref={noteRef}>
+        <OwnerHistory ownersHistoryData={ownersHistory} />
+      </Grid>
+
+      <Grid item xs={12}>
+        <AliasesHorseHistory setRefreshAlias={setRefreshAlias} aliasesHorseHistoryData={aliasesHorseHistory} horseId={horseId} />
+      </Grid>
+
+      <Grid item xs={12} ref={registrationHistoryRef}>
+        <RegistrationHistoryHorse horseId={horseId} />
+      </Grid>
+
+      <Grid item xs={12} >
+        <FormDialog  open={opens}/>
+      </Grid>
+      <Fab
+        aria-label="add"
+        className="floating-button"
+        onClick={(e) => handleOpenNotes(e)}
+        ref={noteButtonRef}
+      >
+        <NoteAddIcon />
+      </Fab>
+      <Popover
+        open={Boolean(openNote)}
+        anchorEl={openNote}
+        onClose={(e) => handleCloseNotes(e)}
+        anchorReference="anchorPosition"
+        anchorPosition={{ top: 200, left: 2000 }}
+        anchorOrigin={{
+          vertical: 'top',
+          horizontal: 'left',
+        }}
+        transformOrigin={{
+          vertical: 'top',
+          horizontal: 'left',
+        }}
+        className="popover-div"
+      >
+        <NoteDialog
+          handleCloseNotes={handleCloseNotes}
+          individualId={userData?.individualId}
+          individualHorseId={horseId}
+          getNotes={getNotes}
+          type={notesType}
+          noteToUpdate={noteToUpdate}
+          userProgram={userProgram}
+        />
+      </Popover>
+      <Button
+        classes={{
+          root: 'side-button',
+        }}
+        onClick={(e) => handleSideMenuOpen(e)}
+      />
+      <Popover
+        open={Boolean(openSideMenu)}
+        anchorEl={openSideMenu}
+        onClose={() => handleSideMenuClose()}
+        anchorReference="anchorPosition"
+        anchorPosition={{ top: 270, left: 2000 }}
+        anchorOrigin={{
+          vertical: 'top',
+          horizontal: 'left',
+        }}
+        transformOrigin={{
+          vertical: 'top',
+          horizontal: 'left',
+        }}
+        className="popover-div"
+
+      >
+        <SideScrollMenu handleScrollComp={handleScrollComp} />
+      </Popover>
+      { openTranserHorse && (
+      <TransferHorseDialog
+        open={openTranserHorse}
+        horseId={horseId}
+        handleClose={() => {
+          setOpenTranserHorse(false);
+        }}
+        getIndividualHorseData={getIndividualHorseData}
+      />
+      )}
+    </Grid>
+  );
+}
+
+const useStaticStyles = makeStyles(() => ({
+  root: {
+    height: 220,
+  },
+  paper: {
+    width: '25%',
+    height: 175,
+    margin: '1%',
+    borderRadius: 25,
+    position: 'relative',
+    background: '#f6f4f4',
+  },
+  iconStyle: {
+    width: 50,
+    height: 50,
+    paddingLeft: 10,
+    paddingTop: 10,
+  },
+  bottomIconStyle: {
+    height: 50,
+    paddingLeft: 10,
+    paddingRight: 10,
+    float: 'right',
+  },
+  buttonStyle: {
+    backgroundColor: '#EC5269',
+    color: 'white',
+    marginTop: '5px',
+    marginLeft: 'auto',
+    left: '10px',
+    textTransform: 'none',
+  },
+  textStyleHeader: { color: '#EC5269', paddingLeft: 10, fontWeight: 'bold' },
+  textStyle: { color: 'black', paddingLeft: 10, fontWeight: 'bold' },
+}));
+const StaticView = (props) => {
+  const classes = useStaticStyles();
+  return (
+    <Grid container direction="row" spacing={3} style={{ height: 300 }}>
+      <Grid item md={12} className={classes.root}>
+        <Grid container direction="row" spacing={3}>
+          <Grid item xs={3}>
+            <ProfileCard {...props} />
+          </Grid>
+          <Grid hidden item xs={9} style={{ height: 240 }}>
+            <StatusCard {...props} />
+          </Grid>
+        </Grid>
+      </Grid>
+    </Grid>
+  );
+};
+
+
+
+---------------------Exam AnotherHorse.js................
+import React from 'react';
+import { useState } from 'react';
+import Button from '@material-ui/core/Button';
+import TextField from '@material-ui/core/TextField';
+import Dialog from '@material-ui/core/Dialog';
+import DialogActions from '@material-ui/core/DialogActions';
+import DialogContent from '@material-ui/core/DialogContent';
+import DialogContentText from '@material-ui/core/DialogContentText';
+import DialogTitle from '@material-ui/core/DialogTitle';
+import ApiUtil from '../../../util/ApiUtil';
+
+
+export default function FormDialog(props) {
+    const[value,setValue]=useState("");
+    const[horseData,setHorseData]=useState();
+
+
+    const handleChange =(e)=>{
+        setValue(e.target.value)
+    }
+
+const handleSubmit =()=>{
+    ApiUtil.getWithToken(`horse/get_horse_by_hj/${value}`).then((res) => {
+        console.log(res.data)
+        setHorseData(res.data);
+    });
+}
+  return (
+    <div>
+     
+      <Dialog open={props.open}  aria-labelledby="form-dialog-title" fullWidth  >
+        <DialogTitle id="form-dialog-title"></DialogTitle>
+        <DialogContent>
+          
+          <TextField
+            autoFocus
+            margin="dense"
+            id="name"
+            label="Horse Id"
+            type="text"
+            fullWidth
+            onChange={(e)=>handleChange(e)}
+            
+          />
+          
+          <Button  
+          variant='outlined'
+          
+          color="primary"
+          onClick={()=>{handleSubmit()}}
+          >Search</Button>
+
+          <h1>individualHorseId:{horseData?.individualHorseId}</h1>
+          <h1>horseName:{horseData?.horseName}</h1>
+          <h1>horseUshjaId:{horseData?.horseUshjaId}</h1>
+          <h1>horseStatus:{horseData?.horseStatus}</h1>
+          <h1>createdAt:{horseData?.createdAt}</h1>
+          <h1>horseRegistrationPlan:{horseData?.horseRegistrationPlan.name}</h1>
+        </DialogContent>
+        {/* <DialogActions>
+          <Button onClick={handleClose} color="primary">
+            Cancel
+          </Button>
+          <Button onClick={handleClose} color="primary">
+            Subscribe
+          </Button>
+        </DialogActions> */}
+      </Dialog>
+    </div>
+  );
+}

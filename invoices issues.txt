@@ -1,0 +1,11 @@
+--------------------issues in invoices--------------------
+
+
+* delete not working
+
+*invoices 
+  * terms  shows id only
+  * sales person  '' ''
+  * rate
+  *tax
+

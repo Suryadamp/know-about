@@ -1,0 +1,25 @@
+const data = [{id:1,CAT:'np'},{id:2,CAT:'np'},{id:3,CAT:'sp'},{id:4,CAT:'sp'},{id:5,CAT:'sp'}];
+      data1=["mango","orange","Apple","mango","orange","apple","mango","orange","Apple"]
+      data2=[1,2,3,4,1,4,3,2,1]
+// pass a function to map
+var uniArray=[];
+var map1=data2.map(i =>{
+ if(uniArray.includes( i)){
+   
+ }else
+ {
+ uniArray.push(i)
+   
+ }
+  
+  
+  
+  
+  
+    
+    
+    })
+  
+
+console.log(uniArray);
+// expected output: Array [2, 8, 18, 32]
